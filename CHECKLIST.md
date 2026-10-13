@@ -9,11 +9,11 @@
 [x] Tests pass locally, output captured
 [x] Lint + format + types clean
 [x] One-command E2E run verified on this machine (make run, outputs/run_log.txt)
-[ ] Gate 2 closed (results not yet reviewed by Kavyasri)
+[ ] Gate 2 closed (results not yet reviewed by Kavyasri; published under the workflow brief)
 [ ] Dockerfile builds and runs (Docker daemon not running on this machine; image not built locally)
-[ ] CI workflow green on GitHub
+[x] CI workflow green on GitHub
 [x] .env.example present, no real values (no secrets needed; file documents that)
-[ ] prepush-scan.sh passes
+[x] prepush-scan.sh passes
 [x] 10+ incremental commits
-[ ] Public repo created, pushed, remote HEAD == local HEAD
-[ ] Root README index updated
+[x] Public repo created, pushed, remote HEAD == local HEAD
+[x] Root README index updated
