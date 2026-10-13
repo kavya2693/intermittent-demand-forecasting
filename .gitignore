@@ -45,3 +45,6 @@ models/*.joblib
 # generated data and run outputs
 data/*.parquet
 data/*.csv
+data/quick/
+outputs/quick/
+outputs/forecasts.parquet
