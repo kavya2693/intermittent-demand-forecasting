@@ -46,13 +46,13 @@ better; bias is total forecast over total actual, minus one.
 | Segment (SKUs) | Model | Weekly WAPE | 8-week WAPE | MAPE (weeks covered) | Bias |
 |---|---|---|---|---|---|
 | smooth (325) | seasonal naive | 36.8% | 19.4% | 67.6% (99%) | -3.0% |
-| | best statistical: seasonal naive | 36.8% | 19.4% | 67.6% | -3.0% |
+| | best statistical: ARIMA | 35.5% | 25.0% | 61.1% | -1.2% |
 | | LightGBM | **27.1%** | **15.2%** | 50.5% | -1.2% |
 | erratic (346) | seasonal naive | 73.6% | 35.5% | 176.1% (95%) | +1.3% |
-| | best statistical: Croston | 59.1% | 36.5% | 157.8% | -0.2% |
+| | best statistical: ARIMA | 58.5% | 34.8% | 164.2% | +1.0% |
 | | LightGBM | **51.4%** | **25.6%** | 138.3% | -4.0% |
 | intermittent (397) | seasonal naive | 133.4% | 64.2% | 82.1% (35%) | -6.5% |
-| | best statistical: ETS | 122.2% | 56.5% | 56.2% | -3.6% |
+| | best statistical: ARIMA | 121.9% | 55.1% | 55.1% | -4.2% |
 | | LightGBM | 121.1% | **51.4%** | 52.9% | +0.5% |
 | | zero forecast | **100.0%** | 100.0% | 100.0% | -100.0% |
 | lumpy (432) | seasonal naive | 156.8% | 80.3% | 123.4% (34%) | -1.5% |
@@ -60,15 +60,16 @@ better; bias is total forecast over total actual, minus one.
 | | LightGBM | 129.0% | **63.6%** | 70.4% | -8.9% |
 | | zero forecast | **100.0%** | 100.0% | 100.0% | -100.0% |
 | all | seasonal naive | 58.1% | 29.1% | 116.7% (62%) | -1.3% |
+| all | ARIMA (best statistical overall) | 50.2% | 31.3% | 98.4% | -0.3% |
 | all | LightGBM | **42.5%** | **21.9%** | 84.9% | -2.7% |
 
 Champion picked on origins 1–3, scored on origins 4–6 (`outputs/champions.csv`): LightGBM was
 picked in all four segments, and cut weekly WAPE against seasonal naive by 25.8% (smooth),
 30.7% (erratic), 8.5% (intermittent) and 17.8% (lumpy).
 
-**Where the ML model does not win.** On intermittent SKUs LightGBM is 1.1 points of weekly
-WAPE better than ETS in aggregate, but it beats the best statistical model on only 45.3% of
-those SKUs individually, and on only 3 of the 6 origins (`outputs/lightgbm_vs_best_statistical.csv`,
+**Where the ML model does not win.** On intermittent SKUs LightGBM is 0.8 points of weekly
+WAPE better than ARIMA in aggregate, but it beats ARIMA on only 45.6% of those SKUs
+individually, and on only 2 of the 6 origins (`outputs/lightgbm_vs_best_statistical.csv`,
 `outputs/fold_summary.csv`). Its intermittent margin exists only on the eight-week total. On
 lumpy SKUs it under-forecasts: bias is -8.9% across all origins and worse than -10% on two of
 six origins (-15.7% at its worst), so the ±10% bias line is not held there.
@@ -76,11 +77,12 @@ six origins (-15.7% at its worst), so the ±10% bias line is not held there.
 **The experiment that could have embarrassed the result.** The statistical models see only
 sales history; LightGBM also sees the calendar, the promotion plan and price. Refitting
 LightGBM with those inputs removed (`LightGBM-history-only`) raises total weekly WAPE from
-42.5% to 45.1%, and on the intermittent segment it then loses to ETS (122.9% vs 122.2%). It
+42.5% to 45.1%, and on the intermittent segment it then loses to ARIMA, ETS and TSB
+(122.9% against 121.9%, 122.2% and 122.8%). It
 still beats every statistical model on smooth, erratic and lumpy SKUs. So about a sixth of the
 margin over seasonal naive is information the statistical models never had, and on
 intermittent SKUs it is the whole weekly-WAPE margin (on the eight-week total the
-history-only model still beats ETS, 53.7% vs 56.5%).
+history-only model still beats ARIMA, 53.7% vs 55.1%).
 
 **The segmentation is noisier than the textbook picture.** The generator gives each SKU an
 intended pattern and the classifier never sees it. 125 of 448 SKUs built as smooth are
@@ -88,7 +90,9 @@ classified erratic, because strong seasonality inflates CV² of the sale sizes, 
 built as intermittent land in lumpy because of occasional bulk orders
 (`outputs/segment_vs_generator_intent.csv`).
 
-ARIMA is not in the 1,500-SKU table; see Known limitations and `outputs/arima_300/`.
+**The two WAPEs disagree on smooth SKUs too.** ARIMA beats seasonal naive week by week
+(35.5% vs 36.8%) but loses on the eight-week total (25.0% vs 19.4%): without a yearly season
+it misses the level of the coming two months even when its weekly shape is closer.
 
 ## How it works
 
@@ -120,10 +124,9 @@ selection) are in [docs/adr/0001-segment-then-compare-on-shared-windows.md](docs
 
 ```bash
 uv sync
-make run      # 1,500 SKUs, six origins, all models except ARIMA, plus the history-only ablation
+make run      # 1,500 SKUs, six origins, every model, plus the history-only ablation (about 12 min)
 make quick    # 120 SKUs, same pipeline, about a minute
 make check    # ruff, format, mypy, pytest
-uv run demand-segments --refresh --skus 300 --jobs 4 --data data/arima_300 --out outputs/arima_300   # with ARIMA
 docker build -t demand-segments . && docker run --rm demand-segments
 ```
 
@@ -162,16 +165,12 @@ a champion.
 
 ## Known limitations
 
-- **The biggest gap: ARIMA was not run on the full catalogue.** Refitting non-seasonal
-  AutoARIMA for 1,500 SKUs at six origins needs around twenty CPU-minutes, and the machine
-  this was built on was shared and starved the job; a first full run was stopped after two
-  hours. ARIMA is in the code and in a separate 300-SKU run (`outputs/arima_300/`), not in
-  the headline table.
+- **The biggest gap: point forecasts only.** Replenishment for intermittent SKUs needs a
+  quantile or a demand distribution over lead time; no service-level or inventory simulation
+  is done, so the comparison is on error, not on fill rate or stock held.
 - ETS and ARIMA are fitted without a 52-week season; only seasonal naive and LightGBM carry
   the yearly pattern, so the statistical side is weaker on seasonal smooth SKUs than a tuned
   seasonal model would be.
-- Point forecasts only. Replenishment for intermittent SKUs needs a quantile or a demand
-  distribution over lead time; no service-level or inventory simulation is done here.
 - LightGBM under-forecasts lumpy SKUs (bias -8.9%, -15.7% on its worst origin). A bias
   correction per segment was not tried.
 - Segments are fixed at the first origin. SKUs that change pattern during the year are scored
@@ -193,11 +192,13 @@ What surprised me was how much of the ML margin is information rather than algor
 the calendar and promotion plan away from LightGBM costs it about a sixth of its gain over
 seasonal naive, and its whole weekly-WAPE edge on intermittent SKUs. If I were presenting this to a
 planning team, the honest message is that LightGBM is worth running for smooth and erratic
-SKUs, while for intermittent SKUs ETS is level with it week by week and the case for
-LightGBM rests on a five-point lead on the eight-week total, which is a smaller and cheaper
+SKUs, while for intermittent SKUs ARIMA and ETS are level with it week by week and the case for
+LightGBM rests on a four-point lead on the eight-week total (51.4% vs 55.1%), which is a smaller and cheaper
 thing to replace with a tuned statistical model.
 
-What I got wrong first: the initial full run included ARIMA and assumed a dedicated CPU. Next
+What I got wrong first: I sized the run for a dedicated CPU, and the first full run with
+ARIMA starved on a shared machine and had to be stopped; it now runs the statistical models
+across four worker processes. Next
 I would add quantile forecasts and a lead-time inventory simulation, so the comparison is on
 fill rate and stock held rather than on error alone, and try a per-segment bias correction
 for lumpy SKUs.
