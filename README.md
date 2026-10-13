@@ -4,7 +4,7 @@
 ![python](https://img.shields.io/badge/python-3.11-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
-Which forecasting method to run for which SKU, when a third of the catalogue sells nothing in
+Which forecasting method to run for which SKU, when nearly half the catalogue sells nothing in
 most weeks: segment by demand pattern, backtest every method on the same windows, and report
 where the machine-learning model does not win.
 
