@@ -1,0 +1,37 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - run: uv sync --locked
+
+      - name: lint
+        run: uv run ruff check .
+
+      - name: format
+        run: uv run ruff format --check .
+
+      - name: types
+        run: uv run mypy
+
+      - name: tests
+        run: uv run pytest -q
+
+      # The full 1,500-SKU run takes around twenty minutes; CI runs the same pipeline on a
+      # 120-SKU catalogue so a broken stage fails the build without the wait.
+      - name: end-to-end backtest, small catalogue
+        run: |
+          mkdir -p outputs
+          uv run demand-segments --refresh --skus 120 --no-arima --data data/quick --out outputs/quick
