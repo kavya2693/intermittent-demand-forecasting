@@ -19,6 +19,9 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--no-arima", action="store_true", help="skip AutoARIMA, the slowest model")
     ap.add_argument("--jobs", type=int, default=1, help="processes for the statistical models")
     ap.add_argument("--rounds", type=int, default=400, help="LightGBM boosting rounds")
+    ap.add_argument(
+        "--ablation", action="store_true", help="also fit LightGBM without calendar and promotion features"
+    )
     args = ap.parse_args(argv)
 
     if args.refresh or not (args.data / "sales.parquet").exists():
@@ -33,6 +36,7 @@ def main(argv: list[str] | None = None) -> None:
         include_arima=not args.no_arima,
         n_jobs=args.jobs,
         ml_rounds=args.rounds,
+        ablation=args.ablation,
     )
     print(report.write(res, skus, args.out, args.windows))
     res.forecasts.to_parquet(args.out / "forecasts.parquet", index=False)

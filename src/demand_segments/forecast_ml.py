@@ -26,14 +26,34 @@ PARAMS: dict[str, object] = {
 }
 ROUNDS = 400
 
+# Information a per-SKU statistical model never sees: the calendar and the promotion plan.
+KNOWN_FUTURE = [
+    "week_of_year",
+    "month",
+    "black_friday",
+    "christmas",
+    "new_year",
+    "easter",
+    "back_to_school",
+    "promo",
+    "promo_last_week",
+    "price_ratio",
+    "promo_share_13",
+]
 
-def fit(p: Panel, before: int, rounds: int = ROUNDS) -> lgb.Booster:
+
+def feature_list(history_only: bool = False) -> list[str]:
+    return [f for f in FEATURES if not (history_only and f in KNOWN_FUTURE)]
+
+
+def fit(p: Panel, before: int, rounds: int = ROUNDS, history_only: bool = False) -> lgb.Booster:
     """Train on every origin whose eight target weeks end before week index ``before``."""
     train = training_frame(p, before)
+    feats = feature_list(history_only)
     # The target is unit-free (sales over the SKU's own level); weighting by the level makes
     # the loss count units, so a 300-a-week SKU matters more than a 1-a-month one, as in WAPE.
     ds = lgb.Dataset(
-        train[FEATURES],
+        train[feats],
         label=train["y"] / train["scale"],
         weight=train["scale"],
         categorical_feature=CATEGORICAL,
@@ -44,7 +64,7 @@ def fit(p: Panel, before: int, rounds: int = ROUNDS) -> lgb.Booster:
 
 def predict(model: lgb.Booster, p: Panel, origin: int) -> pd.DataFrame:
     frame = frame_at(p, origin)
-    pred = np.asarray(model.predict(frame[FEATURES]))
+    pred = np.asarray(model.predict(frame[model.feature_name()]))
     frame["yhat"] = np.clip(pred, 0, None) * frame["scale"]
     return frame[["sku_idx", "t", "yhat"]]
 

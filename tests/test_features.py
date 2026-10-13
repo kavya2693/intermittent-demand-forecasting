@@ -45,3 +45,12 @@ def test_panel_keeps_feed_gaps_as_missing_not_zero(small_data):
     sales, skus = small_data
     panel = Panel.from_frames(sales, skus)
     assert np.isnan(panel.y).sum() == len(skus) * panel.n_weeks - sales["units"].notna().sum()
+
+
+def test_history_only_ablation_drops_every_known_future_input():
+    from demand_segments.forecast_ml import KNOWN_FUTURE, feature_list
+
+    kept = feature_list(history_only=True)
+    assert not set(KNOWN_FUTURE) & set(kept)
+    assert {"year_ago", "mean_13", "weeks_since_sale"} <= set(kept)
+    assert set(KNOWN_FUTURE) <= set(FEATURES)

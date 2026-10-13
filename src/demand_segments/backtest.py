@@ -14,6 +14,7 @@ from demand_segments.metrics import score, wape
 from demand_segments.segments import segment_table
 
 ML = "LightGBM"
+ML_HISTORY_ONLY = "LightGBM-history-only"  # ablation: no calendar, promotion or price features
 ZERO = "ZeroForecast"  # reference only: never a candidate, shows what weekly WAPE rewards
 
 
@@ -37,6 +38,7 @@ def run(
     include_arima: bool = True,
     n_jobs: int = 1,
     ml_rounds: int = forecast_ml.ROUNDS,
+    ablation: bool = False,
     log: bool = True,
 ) -> BacktestResult:
     panel = Panel.from_frames(sales, skus)
@@ -59,19 +61,24 @@ def run(
     if log:
         print(f"statistical models: {timings['statistical models']:.0f}s", flush=True)
 
+    variants = [(ML, False)] + ([(ML_HISTORY_ONLY, True)] if ablation else [])
     ml_parts, model = [], None
-    t0 = time.perf_counter()
-    for fold, origin in enumerate(starts):
-        model = forecast_ml.fit(panel, before=origin, rounds=ml_rounds)
-        pred = forecast_ml.predict(model, panel, origin)
-        pred["sku_id"] = panel.sku_ids[pred["sku_idx"].to_numpy()]
-        pred["week"] = pred["t"].map(week_of)
-        pred["fold"] = fold
-        ml_parts.append(pred[["sku_id", "week", "fold", "yhat"]])
-        if log:
-            print(f"LightGBM fold {fold + 1}/{n_windows} origin {panel.weeks[origin].date()}", flush=True)
-    timings[ML] = time.perf_counter() - t0
-    ml = pd.concat(ml_parts, ignore_index=True).assign(model=ML)
+    for name, history_only in variants:
+        t0 = time.perf_counter()
+        for fold, origin in enumerate(starts):
+            m = forecast_ml.fit(panel, before=origin, rounds=ml_rounds, history_only=history_only)
+            pred = forecast_ml.predict(m, panel, origin)
+            pred["sku_id"] = panel.sku_ids[pred["sku_idx"].to_numpy()]
+            pred["week"] = pred["t"].map(week_of)
+            pred["fold"] = fold
+            pred["model"] = name
+            ml_parts.append(pred[["sku_id", "week", "fold", "model", "yhat"]])
+            if not history_only:
+                model = m
+            if log:
+                print(f"{name} fold {fold + 1}/{n_windows} origin {panel.weeks[origin].date()}", flush=True)
+        timings[name] = time.perf_counter() - t0
+    ml = pd.concat(ml_parts, ignore_index=True)
 
     zero = (
         stats.loc[stats["model"] == forecast_stats.BASELINE]
@@ -98,7 +105,7 @@ def champions(fc: pd.DataFrame, n_select: int) -> pd.DataFrame:
     Choosing and scoring on the same windows would flatter whichever model won by luck. The
     pick uses eight-week WAPE: on weekly WAPE the zero forecast wins the slow segments.
     """
-    fc = fc[fc["model"] != ZERO]
+    fc = fc[~fc["model"].isin([ZERO, ML_HISTORY_ONLY])]
     early, late = fc[fc["fold"] < n_select], fc[fc["fold"] >= n_select]
     pick = (
         score(early, ["segment", "model"]).sort_values("wape_8wk").groupby("segment", observed=True).head(1)
@@ -128,7 +135,7 @@ def champions(fc: pd.DataFrame, n_select: int) -> pd.DataFrame:
 def ml_vs_best_stat(fc: pd.DataFrame) -> pd.DataFrame:
     """Where the global model loses: WAPE gap and per-SKU win share against the segment's best
     statistical model (best on weekly WAPE over all origins, which favours the statistical side)."""
-    fc = fc[fc["model"] != ZERO]
+    fc = fc[~fc["model"].isin([ZERO, ML_HISTORY_ONLY])]
     seg_scores = score(fc, ["segment", "model"])
     rows = []
     for seg, g in seg_scores.groupby("segment", observed=True):
