@@ -40,5 +40,6 @@ to run and how far it beats the seasonal naive forecast it would otherwise fall 
 ## Consequences
 - The stat models do not see promotions or holidays; LightGBM does. Part of its margin on
   smooth and erratic SKUs is that information, not the algorithm.
-- The full run takes around twenty minutes on a laptop CPU, mostly ARIMA. CI runs the same
-  pipeline on 120 SKUs without ARIMA.
+- The full run takes about twelve minutes on a laptop CPU with the statistical models spread
+  over four processes; ARIMA is most of the statistical time. CI runs the same pipeline on
+  120 SKUs without ARIMA.
