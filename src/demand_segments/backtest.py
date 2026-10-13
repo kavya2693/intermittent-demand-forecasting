@@ -14,6 +14,7 @@ from demand_segments.metrics import score, wape
 from demand_segments.segments import segment_table
 
 ML = "LightGBM"
+ZERO = "ZeroForecast"  # reference only: never a candidate, shows what weekly WAPE rewards
 
 
 @dataclass
@@ -72,7 +73,12 @@ def run(
     timings[ML] = time.perf_counter() - t0
     ml = pd.concat(ml_parts, ignore_index=True).assign(model=ML)
 
-    fc = pd.concat([stats.drop(columns="cutoff"), ml], ignore_index=True)
+    zero = (
+        stats.loc[stats["model"] == forecast_stats.BASELINE]
+        .drop(columns="cutoff")
+        .assign(model=ZERO, yhat=0.0)
+    )
+    fc = pd.concat([stats.drop(columns="cutoff"), ml, zero], ignore_index=True)
     actual = sales[["sku_id", "week", "units"]].rename(columns={"units": "y"})
     fc = fc.merge(actual, on=["sku_id", "week"], how="left")
     fc = fc.merge(segs[["sku_id", "segment"]], on="sku_id", how="left")
@@ -89,10 +95,14 @@ def by_segment(fc: pd.DataFrame) -> pd.DataFrame:
 def champions(fc: pd.DataFrame, n_select: int) -> pd.DataFrame:
     """Pick each segment's model on the early windows, then score it on the later ones.
 
-    Choosing and scoring on the same windows would flatter whichever model won by luck.
+    Choosing and scoring on the same windows would flatter whichever model won by luck. The
+    pick uses eight-week WAPE: on weekly WAPE the zero forecast wins the slow segments.
     """
+    fc = fc[fc["model"] != ZERO]
     early, late = fc[fc["fold"] < n_select], fc[fc["fold"] >= n_select]
-    pick = score(early, ["segment", "model"]).sort_values("wape").groupby("segment", observed=True).head(1)
+    pick = (
+        score(early, ["segment", "model"]).sort_values("wape_8wk").groupby("segment", observed=True).head(1)
+    )
     late_scores = score(late, ["segment", "model"]).set_index(["segment", "model"])
     rows = []
     for seg, chosen in pick[["segment", "model"]].itertuples(index=False):
@@ -104,8 +114,10 @@ def champions(fc: pd.DataFrame, n_select: int) -> pd.DataFrame:
                 "segment": seg,
                 "champion": chosen,
                 "champion_wape": champ["wape"],
+                "champion_wape_8wk": champ["wape_8wk"],
                 "champion_bias": champ["bias"],
                 "seasonal_naive_wape": base["wape"],
+                "seasonal_naive_wape_8wk": base["wape_8wk"],
                 "lightgbm_wape": ml["wape"],
                 "wape_reduction_vs_seasonal_naive": 1 - champ["wape"] / base["wape"],
             }
@@ -114,7 +126,9 @@ def champions(fc: pd.DataFrame, n_select: int) -> pd.DataFrame:
 
 
 def ml_vs_best_stat(fc: pd.DataFrame) -> pd.DataFrame:
-    """Where the global model loses: segment WAPE gap and per-SKU win share vs the best per-SKU model."""
+    """Where the global model loses: WAPE gap and per-SKU win share against the segment's best
+    statistical model (best on weekly WAPE over all origins, which favours the statistical side)."""
+    fc = fc[fc["model"] != ZERO]
     seg_scores = score(fc, ["segment", "model"])
     rows = []
     for seg, g in seg_scores.groupby("segment", observed=True):
@@ -134,6 +148,8 @@ def ml_vs_best_stat(fc: pd.DataFrame) -> pd.DataFrame:
                 "best_statistical_wape": stat["wape"],
                 "lightgbm_wape": ml_wape,
                 "lightgbm_gap": ml_wape - stat["wape"],
+                "best_statistical_wape_8wk": stat["wape_8wk"],
+                "lightgbm_wape_8wk": float(g.loc[g["model"] == ML, "wape_8wk"].iloc[0]),
                 "skus_scored": len(per_sku),
                 "lightgbm_sku_win_share": float(np.mean(per_sku[ML] < per_sku[stat["model"]])),
             }
