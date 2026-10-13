@@ -65,3 +65,16 @@ def test_adi_ignores_missing_weeks():
     adi, cv2 = adi_cv2(s)
     assert adi == 1.0
     assert cv2 == 0.0
+
+
+def test_eight_week_wape_stops_rewarding_the_zero_forecast():
+    import pandas as pd
+
+    from demand_segments.metrics import window_wape
+
+    # One sale of 4 units every four weeks; the steady forecast is right on the 8-week total.
+    y = np.tile([0.0, 0.0, 0.0, 4.0], 2)
+    df = pd.DataFrame({"sku_id": "A", "fold": 0, "y": y, "steady": 1.0, "zero": 0.0})
+    assert wape(y, df["steady"].to_numpy()) > wape(y, df["zero"].to_numpy())  # weekly WAPE prefers zero
+    assert window_wape(df, forecast="steady") == 0.0
+    assert window_wape(df, forecast="zero") == 1.0

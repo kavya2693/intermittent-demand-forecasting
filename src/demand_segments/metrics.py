@@ -42,6 +42,18 @@ def mape_coverage(y: np.ndarray) -> float:
     return float((y > 0).mean()) if len(y) else float("nan")
 
 
+def window_wape(df: pd.DataFrame, actual: str = "y", forecast: str = "yhat") -> float:
+    """WAPE on each SKU's eight-week total rather than on single weeks.
+
+    Replenishment buys cover for a lead time, not a single week, so this is the error a
+    planner pays for. It also stops rewarding a forecast of zero for slow movers, which
+    weekly WAPE does: a SKU selling one unit every few weeks has a weekly median of zero.
+    """
+    seen = df[df[actual].notna()]
+    totals = seen.groupby(["sku_id", "fold"], observed=True)[[actual, forecast]].sum()
+    return wape(totals[actual].to_numpy(), totals[forecast].to_numpy())
+
+
 def score(df: pd.DataFrame, by: list[str], actual: str = "y", forecast: str = "yhat") -> pd.DataFrame:
     """WAPE, MAPE (with its coverage) and bias for each group."""
     rows = []
@@ -51,6 +63,7 @@ def score(df: pd.DataFrame, by: list[str], actual: str = "y", forecast: str = "y
             {
                 **dict(zip(by, key if isinstance(key, tuple) else (key,), strict=True)),
                 "wape": wape(y, f),
+                "wape_8wk": window_wape(g, actual, forecast) if {"sku_id", "fold"} <= set(g) else np.nan,
                 "mape": mape(y, f),
                 "mape_coverage": mape_coverage(y),
                 "bias": bias(y, f),
