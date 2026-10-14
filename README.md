@@ -8,9 +8,9 @@ Which forecasting method to run for which SKU, when nearly half the catalogue se
 most weeks: segment by demand pattern, backtest every method on the same windows, and report
 where the machine-learning model does not win.
 
-[![88-second silent walkthrough: the planning problem, why the usual scorecards mislead, the architecture, the per-segment results and where LightGBM does not win](docs/demo/demo.gif)](docs/demo/demo.mp4)
+[![88-second silent walkthrough: the planning problem, why the usual scorecards mislead, the architecture, the per-segment results and where LightGBM does not win](docs/demo/demo.gif)](https://kavya2693.github.io/work-demos/intermittent-demand-forecasting.mp4)
 
-*88-second silent walkthrough. Click for the full video ([MP4, 6 MB](docs/demo/demo.mp4)).*
+*88-second silent walkthrough. [Play the full video](https://kavya2693.github.io/work-demos/intermittent-demand-forecasting.mp4) · [download the MP4, 6 MB](docs/demo/demo.mp4).*
 
 📄 **Audit report:** every figure and assumption in the video, traced to its source — [PDF](docs/demo/AUDIT_REPORT.pdf) · [Word](docs/demo/AUDIT_REPORT.docx) · [Markdown](docs/demo/AUDIT_REPORT.md)
 
