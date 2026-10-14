@@ -8,8 +8,10 @@
            Per repo, edit only the CONFIG object in the script below (and slide B's markup if the key idea differs). */
         #explainer-root {
           position: absolute; inset: 0;
-          --w-bg: #ffffff; --w-ink: #111827; --w-soft: #4b5563; --w-mute: #6b7280; --w-line: #d1d5db;
+          --w-bg: #ffffff; --w-ink: #111827; --w-soft: #4b5563; --w-mute: #4b5563; --w-line: #d1d5db;
           --w-data: #d97706; --w-model: #6d3cf0; --w-tools: #1f8fa8; --w-risk: #dc2b4a; --w-opt: #0f9f6e; --w-eval: #b45309;
+          /* text versions of the layer colours: every one is >= 4.5:1 on white (the fills above are for tiles only) */
+          --w-data-t: #b45309; --w-model-t: #6d3cf0; --w-tools-t: #0e7490; --w-risk-t: #be123c; --w-opt-t: #047857;
           color: var(--w-ink); font-family: Inter, "Helvetica Neue", sans-serif;
         }
         #explainer-root .page { position: absolute; inset: 0; background: var(--w-bg); }
@@ -45,12 +47,12 @@
         #explainer-root .box { position: absolute; border: 3px solid var(--w-line); border-radius: 28px; }
         #explainer-root .pill {
           position: absolute; left: 28px; top: -22px; padding: 6px 18px; border-radius: 999px; background: var(--w-bg);
-          border: 3px solid var(--w-line); font-family: "JetBrains Mono", monospace; font-size: 20px; font-weight: 700;
+          border: 3px solid var(--w-line); font-family: "JetBrains Mono", monospace; font-size: 22px; font-weight: 700;
           letter-spacing: 0.14em; color: var(--w-soft); white-space: nowrap;
         }
         #explainer-root .loop { position: absolute; width: 84px; height: 84px; }
         #explainer-root .loop-lab {
-          position: absolute; font-family: "JetBrains Mono", monospace; font-size: 22px; font-weight: 700; color: var(--w-opt); white-space: nowrap;
+          position: absolute; font-family: "JetBrains Mono", monospace; font-size: 24px; font-weight: 700; color: var(--w-opt-t); white-space: nowrap;
         }
         #explainer-root .badges { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
         #explainer-root .badge { display: flex; align-items: center; gap: 12px; font-size: 24px; font-weight: 700; color: var(--w-ink); white-space: nowrap; }
@@ -67,22 +69,23 @@
           position: absolute; left: 990px; top: 320px; width: 810px; height: 470px; border: 3px solid var(--w-line); border-radius: 28px;
         }
         #explainer-root .demo .pill { left: 32px; }
-        #explainer-root .wk-h { position: absolute; top: 74px; width: 56px; text-align: center; font-family: "JetBrains Mono", monospace; font-size: 20px; color: var(--w-mute); }
+        #explainer-root .wk-h { position: absolute; top: 74px; width: 56px; text-align: center; font-family: "JetBrains Mono", monospace; font-size: 22px; color: var(--w-soft); }
         #explainer-root .rl { position: absolute; left: 36px; width: 140px; height: 56px; display: flex; align-items: center; font-family: "JetBrains Mono", monospace; font-size: 22px; font-weight: 700; letter-spacing: 0.06em; }
         #explainer-root .cell {
           position: absolute; width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
-          font-family: "JetBrains Mono", monospace; font-size: 26px; font-weight: 700; background: #f3f4f6; color: #9ca3af;
+          font-family: "JetBrains Mono", monospace; font-size: 26px; font-weight: 700; background: #f3f4f6; color: #4b5563;
         }
         #explainer-root .cell.sale { background: var(--w-data); color: #fff; }
-        #explainer-root .cell.fz { background: #f3f4f6; color: var(--w-risk); }
-        #explainer-root .cell.fs { background: #e7f6ef; color: var(--w-opt); }
+        #explainer-root .cell.fz { background: #f3f4f6; color: var(--w-risk-t); }
+        #explainer-root .cell.fs { background: #e7f6ef; color: var(--w-opt-t); }
         #explainer-root .tot { position: absolute; left: 700px; width: 80px; height: 56px; display: flex; align-items: center; justify-content: center;
           font-family: "JetBrains Mono", monospace; font-size: 26px; font-weight: 700; border-left: 3px solid var(--w-line); }
-        #explainer-root .tot-h { position: absolute; left: 700px; top: 74px; width: 80px; text-align: center; font-family: "JetBrains Mono", monospace; font-size: 20px; font-weight: 700; color: var(--w-ink); }
+        #explainer-root .tot-h { position: absolute; left: 700px; top: 74px; width: 80px; text-align: center; font-family: "JetBrains Mono", monospace; font-size: 22px; font-weight: 700; color: var(--w-ink); }
         #explainer-root .score { position: absolute; left: 36px; width: 740px; height: 54px; border-radius: 14px; display: flex; align-items: center; padding: 0 20px;
           font-size: 25px; color: var(--w-ink); background: #f9fafb; border: 2px solid var(--w-line); }
-        #explainer-root .score .k { width: 240px; font-family: "JetBrains Mono", monospace; font-size: 21px; font-weight: 700; letter-spacing: 0.06em; color: var(--w-soft); }
+        #explainer-root .score .k { width: 240px; font-family: "JetBrains Mono", monospace; font-size: 22px; font-weight: 700; letter-spacing: 0.04em; color: var(--w-soft); }
         #explainer-root .score .w { font-weight: 800; }
+        #explainer-root .subt { position: absolute; left: 120px; top: 252px; width: 1680px; font-size: 28px; font-weight: 500; color: var(--w-soft); }
         #explainer-root .foot {
           position: absolute; left: 120px; top: 880px; font-family: "JetBrains Mono", monospace; font-size: 24px; color: var(--w-soft);
         }
@@ -93,16 +96,18 @@
           <!-- SLIDE A: the flow -->
           <div class="slide" id="ex-a">
             <div class="kick" id="ex-a-kick">03 · HOW IT WORKS</div>
-            <div class="ttl" id="ex-a-ttl">From sales to the <em style="color: var(--w-opt)">right</em> forecast</div>
+            <div class="ttl" id="ex-a-ttl">From sales to the <em style="color: var(--w-opt-t)">right</em> forecast</div>
             <div class="uline" id="ex-a-ul" style="background: var(--w-opt)"></div>
+            <div class="subt" id="ex-a-sub">Read left to right: sort each product by how it sells, test every method on past weeks, keep the winner.</div>
             <div id="ex-a-flow"></div>
           </div>
 
           <!-- SLIDE B: the one key idea -->
           <div class="slide" id="ex-b">
             <div class="kick" id="ex-b-kick">04 · THE KEY IDEA</div>
-            <div class="ttl" id="ex-b-ttl">Grade the <em style="color: var(--w-data)">8-week</em> total</div>
+            <div class="ttl" id="ex-b-ttl">Grade the <em style="color: var(--w-data-t)">8-week</em> total</div>
             <div class="uline" id="ex-b-ul" style="background: var(--w-data)"></div>
+            <div class="subt" id="ex-b-sub">One slow part, scored two ways. Whichever forecast scores best is the one that gets used.</div>
             <div class="steps">
               <div class="step" id="ex-b-s1"><div class="tile" style="background: var(--w-data)" data-icon="archive"></div>
                 <div class="txt">A part sells 4 units every 4th week<small>most weeks show zero sales</small></div></div>
@@ -114,10 +119,10 @@
             <div class="demo" id="ex-b-demo">
               <div class="pill">ONE SLOW SKU · 8 WEEKS</div>
               <div id="ex-grid"></div>
-              <div class="score" id="ex-sc1" style="top: 318px"><span class="k">WEEK BY WEEK</span><span>winner:&nbsp;</span><span class="w" style="color: var(--w-risk)">zero</span><span style="color: var(--w-soft)">&nbsp;&nbsp;· an order of nothing</span></div>
-              <div class="score" id="ex-sc2" style="top: 386px"><span class="k">8-WEEK TOTAL</span><span>winner:&nbsp;</span><span class="w" style="color: var(--w-opt)">steady</span><span style="color: var(--w-soft)">&nbsp;&nbsp;· 8 forecast, 8 sold</span></div>
+              <div class="score" id="ex-sc1" style="top: 318px"><span class="k">WEEK BY WEEK</span><span>winner:&nbsp;</span><span class="w" style="color: var(--w-risk-t)">zero</span><span style="color: var(--w-soft)">&nbsp;&nbsp;· an order of nothing</span></div>
+              <div class="score" id="ex-sc2" style="top: 386px"><span class="k">8-WEEK TOTAL</span><span>winner:&nbsp;</span><span class="w" style="color: var(--w-opt-t)">steady</span><span style="color: var(--w-soft)">&nbsp;&nbsp;· 8 forecast, 8 sold</span></div>
             </div>
-            <div class="foot" id="ex-b-foot">Backtest: week by week, zero beats every model on the intermittent and lumpy segments (829 of 1,500 SKUs).</div>
+            <div class="foot" id="ex-b-foot">Real backtest, scored week by week: "zero" beats every model in the two slow segments, 829 of 1,500 SKUs.</div>
           </div>
         </div>
         <div class="edge" id="ex-edge"></div>
@@ -179,7 +184,7 @@
             }
             const col = "var(" + b.color + ")";
             let inner = '<div class="tile" style="background:' + col + '">' + svgIcon(b.icon) + "</div>" +
-              '<div class="lab" style="color:' + col + '">' + b.label + "</div>";
+              '<div class="lab" style="color:var(' + b.color + '-t)">' + b.label + "</div>";
             if (b.sub) inner += '<div class="sub">' + b.sub + "</div>";
             if (b.badges) inner += '<div class="badges">' + b.badges.map((t, k) => '<div class="badge" id="ex-bd' + k + '"><i>' + CHECK + "</i>" + t + "</div>").join("") + "</div>";
             html.push('<div class="blk" id="ex-b' + i + '" style="left:' + (b.x - W / 2) + "px;top:" + TILE_TOP + 'px">' + inner + "</div>");
@@ -202,6 +207,7 @@
           tl.fromTo("#ex-a-kick", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 0.5);
           tl.fromTo("#ex-a-ttl", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.55);
           tl.fromTo("#ex-a-ul", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power3.out" }, 0.9);
+          tl.fromTo("#ex-a-sub", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 1.0);
           const STEP = 0.55, S0 = 1.3;
           CONFIG.blocks.forEach((b, i) => {
             const at = S0 + i * STEP;
@@ -222,6 +228,7 @@
           tl.fromTo("#ex-b-kick", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, B);
           tl.fromTo("#ex-b-ttl", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, B + 0.05);
           tl.fromTo("#ex-b-ul", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power3.out" }, B + 0.4);
+          tl.fromTo("#ex-b-sub", { opacity: 0 }, { opacity: 1, duration: 0.5 }, B + 0.45);
           ["#ex-b-s1", "#ex-b-s2", "#ex-b-s3"].forEach((s, i) =>
             tl.fromTo(s, { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, B + 0.6 + i * 0.5));
           tl.fromTo("#ex-b-demo", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, B + 0.7);
@@ -230,9 +237,9 @@
           const grid = document.getElementById("ex-grid");
           const CX = (k) => 190 + k * 63;
           const rowsDef = [
-            { id: "sold", lab: "SOLD", col: "var(--w-data)", top: 104, vals: SALES, cls: (v) => (v > 0 ? "sale" : "") },
-            { id: "zero", lab: "ZERO", col: "var(--w-risk)", top: 172, vals: SALES.map(() => 0), cls: () => "fz" },
-            { id: "steady", lab: "STEADY", col: "var(--w-opt)", top: 240, vals: SALES.map(() => 1), cls: () => "fs" },
+            { id: "sold", lab: "SOLD", col: "var(--w-data-t)", top: 104, vals: SALES, cls: (v) => (v > 0 ? "sale" : "") },
+            { id: "zero", lab: "ZERO", col: "var(--w-risk-t)", top: 172, vals: SALES.map(() => 0), cls: () => "fz" },
+            { id: "steady", lab: "STEADY", col: "var(--w-opt-t)", top: 240, vals: SALES.map(() => 1), cls: () => "fs" },
           ];
           const gh = [];
           SALES.forEach((_, k) => gh.push('<div class="wk-h" style="left:' + CX(k) + 'px">w' + (k + 1) + "</div>"));
@@ -250,9 +257,10 @@
           tl.fromTo("#ex-row-steady", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" }, G0 + 0.9);
           tl.fromTo("#ex-sc1", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, G0 + 1.6);
           tl.fromTo("#ex-sc2", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, G0 + 2.6);
-          tl.to("#ex-sc1", { opacity: 0.45, duration: 0.4 }, G0 + 2.6);
           tl.to("#ex-sc2", { borderColor: "#0f9f6e", backgroundColor: "#ecfdf5", duration: 0.4 }, G0 + 2.9);
           tl.fromTo("#ex-b-foot", { opacity: 0 }, { opacity: 1, duration: 0.5 }, G0 + 3.4);
+          // slide B text fades fully out before the wipe, so no two slides' text is ever on screen together
+          tl.to("#ex-b", { opacity: 0, duration: 0.35, ease: "power2.in" }, D - 1.05);
           // wipe out (white -> dark), revealing the next dark scene underneath
           tl.to("#ex-page", { clipPath: "inset(0px 0px 0px 100%)", duration: 0.7, ease: "power3.inOut" }, D - 0.7);
           tl.fromTo("#ex-edge", { x: 0, opacity: 0 }, { x: 1920, opacity: 1, duration: 0.7, ease: "power3.inOut", immediateRender: false }, D - 0.7);

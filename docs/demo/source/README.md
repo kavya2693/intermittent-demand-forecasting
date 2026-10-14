@@ -53,7 +53,7 @@ python3 docs/demo/source/tools/inject_sheet.py docs/demo/source/assets/forecast_
   --keys scatter,example,forecast_rows_total,forecast_models
 python3 docs/demo/source/tools/make_end_scatter.py outputs/sku_segments.csv docs/demo/source/assets/scatter-end.png
 
-# 3. render (88.4 s, 1920x1080, 30 fps, silent) and compress
+# 3. render (90.4 s, 1920x1080, 30 fps, silent) and compress
 cd docs/demo/source
 npx --yes hyperframes@0.8.156 check
 npx --yes hyperframes@0.8.156 render -f 30 -q looks -o renders/intermittent-demand-forecasting-master.mp4

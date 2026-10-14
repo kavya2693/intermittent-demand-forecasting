@@ -8,7 +8,7 @@
            person using it (right). Data is inlined by tools/inject_sheet.py between the SHEET markers. */
         #value-root {
           position: absolute; inset: 0;
-          --w-bg: #ffffff; --w-ink: #111827; --w-soft: #4b5563; --w-mute: #6b7280; --w-line: #d1d5db; --w-faint: #f3f4f6;
+          --w-bg: #ffffff; --w-ink: #111827; --w-soft: #4b5563; --w-mute: #4b5563; --w-line: #d1d5db; --w-faint: #f3f4f6;
           --w-data: #d97706; --w-model: #6d3cf0; --w-tools: #1f8fa8; --w-risk: #dc2b4a; --w-opt: #0f9f6e;
           color: var(--w-ink); font-family: Inter, "Helvetica Neue", sans-serif;
         }
@@ -27,7 +27,7 @@
 
         /* sheet */
         #value-root .sheet {
-          position: absolute; left: 120px; top: 280px; width: 1050px; height: 640px; border: 3px solid var(--w-line);
+          position: absolute; left: 120px; top: 300px; width: 1050px; height: 620px; border: 3px solid var(--w-line);
           border-radius: 24px; background: #fff; box-shadow: 0 18px 40px rgba(17, 24, 39, 0.08); overflow: hidden;
         }
         #value-root .sheet-head {
@@ -36,10 +36,10 @@
         }
         #value-root .sheet-head span:last-child { color: #c4b5fd; }
         #value-root .row {
-          position: relative; display: flex; align-items: center; height: 64px; padding: 0 26px;
-          font-family: "JetBrains Mono", monospace; font-size: 21px; color: var(--w-ink); border-bottom: 2px solid var(--w-faint);
+          position: relative; display: flex; align-items: center; height: 60px; padding: 0 26px;
+          font-family: "JetBrains Mono", monospace; font-size: 22px; color: var(--w-ink); border-bottom: 2px solid var(--w-faint);
         }
-        #value-root .row.hdr { height: 54px; font-size: 18px; font-weight: 700; letter-spacing: 0.1em; color: var(--w-mute); background: #fafafa; }
+        #value-root .row.hdr { height: 54px; font-size: 22px; font-weight: 700; letter-spacing: 0.02em; color: var(--w-mute); background: #fafafa; }
         #value-root .row .tint { position: absolute; inset: 0; opacity: 0; }
         #value-root .c { position: relative; white-space: nowrap; }
         #value-root .c1 { width: 170px; display: flex; align-items: center; gap: 10px; font-weight: 700; }
@@ -50,7 +50,7 @@
         #value-root .c5 { width: 140px; text-align: right; padding-right: 22px; font-weight: 700; }
         #value-root .c6 { width: 110px; text-align: right; padding-right: 22px; }
         #value-root .c7 { width: 100px; text-align: right; }
-        #value-root .more { padding: 14px 30px 0; font-family: "JetBrains Mono", monospace; font-size: 20px; color: var(--w-mute); }
+        #value-root .more { padding: 14px 30px 0; font-family: "JetBrains Mono", monospace; font-size: 22px; color: var(--w-mute); }
         #value-root .totals {
           position: absolute; left: 0; bottom: 0; width: 100%; height: 66px; display: flex; align-items: center; gap: 14px; padding: 0 30px;
           background: #ecfdf5; border-top: 2px solid #a7f3d0; font-size: 23px; font-weight: 700; color: #065f46;
@@ -59,10 +59,12 @@
         #value-root .totals svg { position: absolute; left: 6px; top: 6px; width: 16px; height: 16px; }
 
         /* scene */
-        #value-root .scene-lab { position: absolute; font-family: "JetBrains Mono", monospace; font-size: 20px; font-weight: 700; letter-spacing: 0.14em; color: var(--w-mute); }
-        #value-root .room { position: absolute; left: 1220px; top: 312px; width: 600px; height: 608px; border-radius: 24px; border: 3px solid var(--w-line); background: #fbfbfc; }
-        #value-root .wk { position: absolute; left: 1560px; top: 276px; width: 260px; text-align: right; font-family: "JetBrains Mono", monospace; font-size: 22px; font-weight: 700; color: var(--w-ink); }
+        #value-root .scene-lab { position: absolute; font-family: "JetBrains Mono", monospace; font-size: 22px; font-weight: 700; letter-spacing: 0.14em; color: var(--w-mute); }
+        #value-root .room { position: absolute; left: 1220px; top: 332px; width: 600px; height: 588px; border-radius: 24px; border: 3px solid var(--w-line); background: #fbfbfc; }
+        #value-root .wk { position: absolute; left: 1560px; top: 296px; width: 260px; text-align: right; font-family: "JetBrains Mono", monospace; font-size: 22px; font-weight: 700; color: var(--w-ink); }
         #value-root svg.layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+        #value-root .subt { position: absolute; left: 120px; top: 248px; width: 1680px; font-size: 26px; font-weight: 500; color: var(--w-soft); }
+        #value-root .subt b { color: var(--w-ink); }
         #value-root .caption {
           position: absolute; left: 120px; top: 944px; width: 1700px; font-size: 30px; font-weight: 700; color: var(--w-ink);
         }
@@ -74,12 +76,13 @@
           <div class="kick" id="va-kick">07 · END-USER VALUE</div>
           <div class="ttl" id="va-ttl">What the <em>planner</em> gets</div>
           <div class="uline" id="va-ul"></div>
+          <div class="subt" id="va-sub">Each row: one product's forecast for the next 8 weeks next to what really sold. <b>DIFF</b> close to 0 is good.</div>
 
           <div class="sheet" id="va-sheet">
             <div class="sheet-head"><span id="va-head-l">8-WEEK FORECAST SHEET</span><span id="va-head-r"></span></div>
             <div class="row hdr" id="va-hdr">
-              <div class="c c1">SKU</div><div class="c c2" style="font-family: 'JetBrains Mono', monospace; font-size: 18px">CATEGORY</div>
-              <div class="c c3" style="font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700">SEGMENT</div>
+              <div class="c c1">SKU</div><div class="c c2" style="font-family: 'JetBrains Mono', monospace; font-size: 22px">CATEGORY</div>
+              <div class="c c3" style="font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700">SEGMENT</div>
               <div class="c c4">SOLD/52</div><div class="c c5">FORECAST</div><div class="c c6">SOLD</div><div class="c c7">DIFF</div>
             </div>
             <div id="va-rows"></div>
@@ -87,7 +90,7 @@
             <div class="totals" id="va-totals"></div>
           </div>
 
-          <div class="scene-lab" id="va-lab-room" style="left: 1220px; top: 280px">STOCK ROOM · NEXT 8 WEEKS</div>
+          <div class="scene-lab" id="va-lab-room" style="left: 1220px; top: 300px">STOCK ROOM · NEXT 8 WEEKS</div>
           <div class="wk" id="va-wk">WEEK 0 / 8</div>
           <div class="room" id="va-room"></div>
           <svg class="layer" id="va-svg" viewBox="0 0 1920 1080"></svg>
@@ -104,8 +107,9 @@
           const CONFIG = {
             duration: 13.0,
             colors: ["#0f9f6e", "#1f8fa8", "#6d3cf0", "#dc2b4a"], // one per animated row: smooth, erratic, intermittent, lumpy
-            bayX: [1362, 1474, 1586, 1698], bayW: 84, bayTop: 486, bayBot: 790,
-            person: { x: 1284, y: 560 },
+            bayX: [1362, 1474, 1586, 1698], bayW: 84, bayTop: 506, bayBot: 806,
+            textColors: ["#047857", "#0e7490", "#6d3cf0", "#be123c"], // same order, darkened to >= 4.5:1 on white for text
+            person: { x: 1284, y: 580 },
           };
           const NS = "http://www.w3.org/2000/svg";
           const svg = document.getElementById("va-svg");
@@ -116,7 +120,7 @@
             return n;
           };
           const tx = (parent, x, y, s, attrs) => {
-            const t = el("text", Object.assign({ x, y, "text-anchor": "middle", "font-family": "JetBrains Mono, monospace", "font-size": 20, fill: "#4b5563" }, attrs || {}), parent);
+            const t = el("text", Object.assign({ x, y, "text-anchor": "middle", "font-family": "JetBrains Mono, monospace", "font-size": 22, fill: "#4b5563" }, attrs || {}), parent);
             t.textContent = s;
             return t;
           };
@@ -138,9 +142,9 @@
               '<div class="row" id="va-r' + i + '"><div class="tint" id="va-t' + i + '" style="background:' + col + '22"></div>' +
               '<div class="c c1"><i style="background:' + col + '"></i>' + r.sku + "</div>" +
               '<div class="c c2">' + r.category.replace("_", " ") + "</div>" +
-              '<div class="c c3" style="color:' + (r.animate >= 0 ? col : "#4b5563") + '">' + r.segment + "</div>" +
+              '<div class="c c3" style="color:' + (r.animate >= 0 ? CONFIG.textColors[r.animate] : "#4b5563") + '">' + r.segment + "</div>" +
               '<div class="c c4">' + r.weeks_sold_52 + '</div><div class="c c5">' + fmt1(r.forecast_8wk) + '</div><div class="c c6">' + fmt(r.sold_8wk) + "</div>" +
-              '<div class="c c7" style="color:' + (diff >= 0 ? "#0f9f6e" : "#b45309") + '">' + sign(diff) + "</div></div>");
+              '<div class="c c7" style="color:' + (diff >= 0 ? "#047857" : "#b45309") + '">' + sign(diff) + "</div></div>");
           });
           document.getElementById("va-more").textContent = "+ " + fmt(SHEET.skus - rows.length) + " more SKUs on this sheet";
           document.getElementById("va-totals").innerHTML =
@@ -155,8 +159,8 @@
           const paper = el("g", { id: "va-paper" }, person);
           el("rect", { x: P.x + 18, y: P.y - 10, width: 26, height: 32, rx: 4, fill: "#fff", stroke: "#111827", "stroke-width": 2.5 }, paper);
           [0, 1, 2].forEach((k) => el("line", { x1: P.x + 23, x2: P.x + 39, y1: P.y - 2 + k * 8, y2: P.y - 2 + k * 8, stroke: "#9ca3af", "stroke-width": 2 }, paper));
-          tx(person, P.x, P.y + 72, "planner", { "font-size": 20, fill: "#6b7280" });
-          tx(svg, 1520, 400, "stock to the plan, then 8 real weeks of sales", { fill: "#6b7280" }).setAttribute("id", "va-hint");
+          tx(person, P.x, P.y + 72, "planner", { "font-size": 22, fill: "#4b5563" });
+          tx(svg, 1520, 420, "filled to the forecast, then 8 weeks sell", { fill: "#4b5563" }).setAttribute("id", "va-hint");
 
           const H = CONFIG.bayBot - CONFIG.bayTop;
           const anim = rows.map((r, i) => ({ r, i })).filter((o) => o.r.animate >= 0);
@@ -171,15 +175,15 @@
             el("rect", { x, y: CONFIG.bayTop, width: w, height: H, rx: 10, fill: "#f3f4f6", stroke: "#d1d5db", "stroke-width": 2.5 }, g);
             [0.25, 0.5, 0.75].forEach((f) => el("line", { x1: x + 6, x2: x + w - 6, y1: CONFIG.bayTop + f * H, y2: CONFIG.bayTop + f * H, stroke: "#e5e7eb", "stroke-width": 2 }, g));
             el("circle", { cx: x + w / 2 - 40, cy: CONFIG.bayBot + 23, r: 6, fill: col }, g);
-            tx(g, x + w / 2 + 6, CONFIG.bayBot + 30, r.sku.replace("SKU", "#"), { "font-size": 20, fill: "#111827", "font-weight": 700 });
+            tx(g, x + w / 2 + 6, CONFIG.bayBot + 30, r.sku.replace("SKU", "#"), { "font-size": 22, fill: "#111827", "font-weight": 700 });
             // stock fill: a full-height rect scaled from the bottom
             const fill = el("rect", { x: x + 5, y: CONFIG.bayTop, width: w - 10, height: H, rx: 7, fill: col, "fill-opacity": 0.85 });
             const planLab = el("g", { opacity: 0 });
-            tx(planLab, x + w / 2, CONFIG.bayTop - 40, "plan", { fill: "#6b7280" });
+            tx(planLab, x + w / 2, CONFIG.bayTop - 40, "plan", { fill: "#4b5563" });
             tx(planLab, x + w / 2, CONFIG.bayTop - 14, fmt1(r.forecast_8wk), { fill: "#111827", "font-weight": 700, "font-size": 22 });
             const diff = r.forecast_8wk - r.sold_8wk;
             const endLab = el("g", { opacity: 0 });
-            const ec = diff >= 0 ? "#0f9f6e" : "#b45309";
+            const ec = diff >= 0 ? "#047857" : "#b45309";
             tx(endLab, x + w / 2, CONFIG.bayBot + 66, sign(diff), { fill: ec, "font-weight": 700, "font-size": 22 });
             tx(endLab, x + w / 2, CONFIG.bayBot + 92, diff >= 0 ? "left" : "short", { fill: ec });
             bays.push({ r, i, b, col, x, w, fill, planLab, endLab, hOf });
@@ -215,6 +219,7 @@
           tl.fromTo("#va-kick", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 0.5);
           tl.fromTo("#va-ttl", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.55);
           tl.fromTo("#va-ul", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power3.out" }, 0.9);
+          tl.fromTo("#va-sub", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 1.0);
           tl.fromTo("#va-sheet", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.8);
           rows.forEach((_, i) => tl.fromTo("#va-r" + i, { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" }, 1.3 + i * 0.3));
           tl.fromTo("#va-more", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 1.3 + rows.length * 0.3);
@@ -224,6 +229,8 @@
           tl.fromTo("#va-person", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 1.1);
           tl.fromTo("#va-paper", { rotation: 0 }, { rotation: -10, svgOrigin: CONFIG.person.x + 31 + " " + (CONFIG.person.y + 6), duration: 0.3, ease: "sine.inOut", yoyo: true, repeat: 7 }, 2.3);
           tl.fromTo("#va-caption", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 9.6);
+          // all text fades fully out before the wipe, so no two slides' text is ever on screen together
+          tl.to(["#va-kick", "#va-ttl", "#va-ul", "#va-sub", "#va-sheet", "#va-lab-room", "#va-wk", "#va-room", "#va-svg", "#va-caption"], { opacity: 0, duration: 0.35, ease: "power2.in" }, D - 1.05);
           // wipe out (white -> dark), revealing the next dark scene underneath
           tl.to("#va-page", { clipPath: "inset(0px 0px 0px 100%)", duration: 0.7, ease: "power3.inOut" }, D - 0.7);
           tl.fromTo("#va-edge", { x: 0, opacity: 0 }, { x: 1920, opacity: 1, duration: 0.7, ease: "power3.inOut", immediateRender: false }, D - 0.7);

@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-14 14:20",
+ "generated": "2026-10-14 17:27",
  "commit": "3616b6c2747b6be20b0c56b6345c4954391b22ac",
  "checks": [
   {
@@ -52,7 +52,7 @@
   },
   {
    "id": "F-07",
-   "shown": "7 methods, same windows / Seven methods",
+   "shown": "7 methods, same test weeks / Seven methods",
    "type": "direct",
    "computed": "7",
    "expect": "7",
@@ -60,7 +60,7 @@
   },
   {
    "id": "F-08",
-   "shown": "weekly WAPE crowns zero: 829 SKUs",
+   "shown": "weekly WAPE crowns zero: 829 SKUs / 829 of 1,500 SKUs",
    "type": "derived",
    "computed": "829",
    "expect": "829",
@@ -68,7 +68,7 @@
   },
   {
    "id": "F-09",
-   "shown": "crowns zero / zero beats every model",
+   "shown": "crowns zero / \"zero\" beats every model in the two slow segments / ordering nothing scores best; would choose \"order nothing\" for both slow segments",
    "type": "derived",
    "computed": "true",
    "expect": "true",
@@ -124,7 +124,7 @@
   },
   {
    "id": "F-18",
-   "shown": "ADI 1.32 \u00b7 CV\u00b2 0.49",
+   "shown": "how often \u00b7 how evenly (slide 05) / cut-off 1.32 \u00b7 cut-off 0.49 (slide 06)",
    "type": "direct",
    "computed": "true",
    "expect": "true",
@@ -180,7 +180,7 @@
   },
   {
    "id": "F-25",
-   "shown": "same 48 weeks for every model \u00b7 origins, 8 weeks apart \u00b7 6 / 6",
+   "shown": "same 48 weeks for every model \u00b7 test windows, 8 weeks apart \u00b7 6 / 6 / all on the same 48 test weeks",
    "type": "direct",
    "computed": "true",
    "expect": "true",
@@ -196,7 +196,7 @@
   },
   {
    "id": "F-27",
-   "shown": "WAPE \u00b7 8-wk WAPE \u00b7 bias \u00b7 MAPE",
+   "shown": "WAPE \u00b7 8-wk WAPE \u00b7 bias \u00b7 MAPE / other scores still reported",
    "type": "direct",
    "computed": "true",
    "expect": "true",
@@ -204,7 +204,7 @@
   },
   {
    "id": "F-28",
-   "shown": "pick on origins 1\u20133, grade 4\u20136",
+   "shown": "pick on windows 1\u20133, grade on 4\u20136 / Winners picked on test windows 1\u20133, then graded on windows 4\u20136",
    "type": "direct",
    "computed": "true",
    "expect": "true",
@@ -372,7 +372,7 @@
   },
   {
    "id": "F-51",
-   "shown": "seasonal naive 29.1%",
+   "shown": "seasonal naive 29.1% / seasonal naive 29.1%",
    "type": "direct",
    "computed": "29.1%",
    "expect": "29.1%",
@@ -451,41 +451,49 @@
    "status": "pass"
   },
   {
-   "id": "F-61",
-   "shown": "122.9%",
-   "type": "direct",
-   "computed": "122.9%",
-   "expect": "122.9%",
-   "status": "pass"
-  },
-  {
    "id": "F-62",
-   "shown": "397 SKUs",
+   "shown": "397 / the same 397 rarely-selling SKUs",
    "type": "direct",
    "computed": "397",
    "expect": "397",
    "status": "pass"
   },
   {
-   "id": "F-63",
-   "shown": "45.6%",
+   "id": "F-69",
+   "shown": "51.4%",
    "type": "direct",
-   "computed": "45.6%",
-   "expect": "45.6%",
+   "computed": "51.4%",
+   "expect": "51.4%",
    "status": "pass"
   },
   {
-   "id": "F-64",
-   "shown": "2 of 6 origins",
-   "type": "direct",
-   "computed": "2 of 6",
-   "expect": "2 of 6",
-   "status": "pass"
-  },
-  {
-   "id": "F-65",
-   "shown": "the edge is the calendar and promo plan, not the algorithm",
+   "id": "F-70",
+   "shown": "55.1% \u00b7 best classic method",
    "type": "derived",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-71",
+   "shown": "100.0% \u00b7 always scores 100% here",
+   "type": "direct",
+   "computed": "100.0%",
+   "expect": "100.0%",
+   "status": "pass"
+  },
+  {
+   "id": "F-72",
+   "shown": "Pick each model on the 8-week total \u00b7 LightGBM PICKED",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-73",
+   "shown": "can never be picked / the code never lets it be picked",
+   "type": "direct",
    "computed": "true",
    "expect": "true",
    "status": "pass"
@@ -500,7 +508,7 @@
   },
   {
    "id": "F-67",
-   "shown": "$ make run   # 1,500 SKUs, 6 origins, ~12 min",
+   "shown": "$ make run   # 1,500 SKUs, 6 test windows, ~12 min",
    "type": "direct",
    "computed": "true",
    "expect": "true",

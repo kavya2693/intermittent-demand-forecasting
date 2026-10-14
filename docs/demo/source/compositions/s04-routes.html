@@ -9,8 +9,8 @@
            Data is inlined by tools/inject_sheet.py between the RUN markers. */
         #routes-root { position: absolute; inset: 0; }
         #routes-root svg.plot { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
-        #routes-root .ax { font-family: var(--mono); font-size: 20px; fill: #8494a6; }
-        #routes-root .axl { font-family: var(--mono); font-size: 22px; fill: #b2bfcc; }
+        #routes-root .ax { font-family: var(--mono); font-size: 22px; fill: #9fb0c2; }
+        #routes-root .axl { font-family: var(--sans); font-size: 24px; font-weight: 500; fill: #c8d3de; }
         #routes-root .panel { position: absolute; left: 1250px; top: 250px; width: 550px; }
         #routes-root .big { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 96px; font-weight: 700; letter-spacing: -0.04em; color: var(--ink); line-height: 1; }
         #routes-root .big small { font-size: 36px; color: var(--ink-soft); letter-spacing: 0; margin-left: 12px; }
@@ -19,12 +19,12 @@
         #routes-root .seg .nm { width: 210px; font-size: 32px; font-weight: 700; color: var(--ink); }
         #routes-root .seg .ct { width: 90px; font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 32px; font-weight: 700; text-align: right; }
         #routes-root .seg .ds { margin-left: 22px; font-size: 24px; color: var(--ink-soft); white-space: nowrap; }
-        #routes-root .defs { margin-top: 40px; padding-top: 22px; border-top: 2px solid var(--line); font-family: var(--mono); font-size: 22px; line-height: 1.6; color: var(--ink-mute); }
-        #routes-root .defs b { color: var(--ink-soft); font-weight: 700; }
+        #routes-root .defs { margin-top: 40px; padding-top: 22px; border-top: 2px solid var(--line); font-size: 24px; line-height: 1.5; color: var(--ink-soft); }
+        #routes-root .defs b { color: var(--ink); font-weight: 700; }
         #routes-root .title-b { position: absolute; left: 120px; top: 118px; width: 1680px; font-size: 52px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.12; color: var(--ink); }
-        #routes-root .legend-b { position: absolute; left: 120px; top: 214px; display: flex; gap: 34px; font-family: var(--mono); font-size: 22px; color: var(--ink-soft); }
+        #routes-root .legend-b { position: absolute; left: 120px; top: 240px; display: flex; gap: 34px; font-family: var(--mono); font-size: 22px; color: var(--ink-soft); }
         #routes-root .legend-b span { display: flex; align-items: center; gap: 10px; }
-        #routes-root .tot { position: absolute; top: 826px; width: 181px; text-align: center; font-family: var(--mono); font-size: 20px; line-height: 1.35; color: var(--ink-soft); }
+        #routes-root .tot { position: absolute; top: 826px; width: 181px; text-align: center; font-family: var(--mono); font-size: 22px; line-height: 1.35; color: var(--ink-soft); }
         #routes-root .tot b { color: var(--c-model); font-weight: 700; }
         #routes-root .tot em { font-style: normal; color: var(--c-eval); font-weight: 700; }
         #routes-root .count {
@@ -40,6 +40,7 @@
           <!-- phase A -->
           <div id="routes-a">
             <div class="scene-title" data-layout-allow-overlap id="routes-title">Every SKU, placed by how often and how evenly it sells.</div>
+            <div class="scene-sub" id="routes-sub-a">Each dot is one SKU. Further right = sells less often; higher up = sale sizes vary more.</div>
             <svg class="plot" id="routes-svg-a" viewBox="0 0 1920 1080"></svg>
             <div class="panel" id="routes-panel">
               <div class="big" id="routes-n"><span id="routes-n-v">0</span><small>SKUs</small></div>
@@ -47,12 +48,13 @@
               <div class="seg" id="routes-s1"><i style="background: var(--c-data)"></i><span class="nm">erratic</span><span class="ct" id="routes-c1" style="color: var(--c-data)">0</span><span class="ds">most weeks, sizes jump</span></div>
               <div class="seg" id="routes-s2"><i style="background: var(--c-model)"></i><span class="nm">intermittent</span><span class="ct" id="routes-c2" style="color: var(--c-model)">0</span><span class="ds">rare, steady size</span></div>
               <div class="seg" id="routes-s3"><i style="background: var(--c-risk)"></i><span class="nm">lumpy</span><span class="ct" id="routes-c3" style="color: var(--c-risk)">0</span><span class="ds">rare, sizes jump</span></div>
-              <div class="defs" id="routes-defs"><b>ADI</b> average weeks between sales<br /><b>CV²</b> variation in sale size<br />history before the first origin</div>
+              <div class="defs" id="routes-defs"><b>Dashed lines</b> split the four groups. Measured on sales before the first test window.</div>
             </div>
           </div>
           <!-- phase B -->
           <div id="routes-b">
             <div class="title-b" id="routes-title-b"></div>
+            <div class="scene-sub" id="routes-sub-b">Bars = real weekly sales; purple line = LightGBM forecast. Each shaded column is one 8-week test window.</div>
             <div class="legend-b" id="routes-legend-b">
               <span><svg width="22" height="22"><rect x="4" y="2" width="14" height="20" rx="2" fill="#f2c46d" /></svg>units sold</span>
               <span><svg width="44" height="10"><path d="M2 5h40" stroke="#b9a2ff" stroke-width="4" /></svg>LightGBM</span>
@@ -60,7 +62,7 @@
             </div>
             <svg class="plot" id="routes-svg-b" viewBox="0 0 1920 1080"></svg>
             <div id="routes-tots"></div>
-            <div class="count" id="routes-count">9 models × 1,500 SKUs × 48 weeks = <b id="routes-count-v">0</b> forecasts, same windows</div>
+            <div class="count" id="routes-count">9 models × 1,500 SKUs × 48 weeks = <b id="routes-count-v">0</b> forecasts, all on the same 48 test weeks</div>
           </div>
         </div>
       </div>
@@ -96,14 +98,14 @@
           el("rect", { x: X0, y: Y0, width: X1 - X0, height: Y1 - Y0, fill: "rgba(15,26,38,0.55)", stroke: "#24364a", "stroke-width": 2, rx: 8 }, axes);
           [1, 2, 4, 8, 16].forEach((v) => { txt(axes, sx(v), Y1 + 32, String(v), "ax"); });
           [0, 1, 2, 3].forEach((v) => { txt(axes, X0 - 16, sy(v) + 7, String(v), "ax", "end"); });
-          txt(axes, (X0 + X1) / 2, Y1 + 72, "ADI · average weeks between sales (log scale) →", "axl");
-          const yl = txt(axes, 0, 0, "CV² · variation in sale size →", "axl");
+          txt(axes, (X0 + X1) / 2, Y1 + 72, "how often it sells: average weeks between sales (log scale) →", "axl");
+          const yl = txt(axes, 0, 0, "how evenly: variation in sale size →", "axl");
           yl.setAttribute("transform", "translate(" + (X0 - 56) + " " + (Y0 + Y1) / 2 + ") rotate(-90)");
           const cuts = el("g", { id: "routes-cuts", opacity: 0 }, A);
           el("line", { x1: sx(1.32), x2: sx(1.32), y1: Y0, y2: Y1, stroke: "#eef2f6", "stroke-width": 2, "stroke-dasharray": "8 7", opacity: 0.7 }, cuts);
           el("line", { x1: X0, x2: X1, y1: sy(0.49), y2: sy(0.49), stroke: "#eef2f6", "stroke-width": 2, "stroke-dasharray": "8 7", opacity: 0.7 }, cuts);
-          txt(cuts, sx(1.32) + 10, Y0 + 30, "ADI 1.32", "ax", "start");
-          txt(cuts, X1 - 12, sy(0.49) - 12, "CV² 0.49", "ax", "end");
+          txt(cuts, sx(1.32) + 10, Y0 + 30, "cut-off 1.32", "ax", "start");
+          txt(cuts, X1 - 12, sy(0.49) - 12, "cut-off 0.49", "ax", "end");
           const groups = {};
           SEGS.forEach((s) => (groups[s] = el("g", { id: "routes-g-" + s, opacity: 0 }, A)));
           (RUN.scatter || []).forEach(([adi, cv2, seg]) => {
@@ -114,6 +116,7 @@
           tl.fromTo("#routes-in", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0);
           tl.fromTo("#routes-eyebrow", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 0.1);
           tl.fromTo("#routes-title", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.2);
+          tl.fromTo("#routes-sub-a", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.5);
           tl.fromTo("#routes-axes", { opacity: 0 }, { opacity: 1, duration: 0.6 }, 0.6);
           tl.fromTo("#routes-panel", { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.6, ease: "power3.out" }, 0.8);
           tl.fromTo("#routes-cuts", { attr: { opacity: 0 } }, { attr: { opacity: 1 }, duration: 0.5 }, 1.2);
@@ -151,7 +154,7 @@
             const x = bxi(H + k * 8);
             el("rect", { x: x + 1, y: BY0 - 40, width: 8 * bw - 2, height: BY1 - BY0 + 40, fill: k % 2 ? "rgba(185,162,255,0.05)" : "rgba(185,162,255,0.09)" }, wins);
             el("line", { x1: x, x2: x, y1: BY0 - 40, y2: BY1, stroke: "#3fd8a8", "stroke-width": 2, opacity: 0.8 }, wins);
-            txt(wins, x + 4 * bw, BY0 - 14, "origin " + (k + 1), "ax");
+            txt(wins, x + 4 * bw, BY0 - 14, "test " + (k + 1), "ax");
           }
           // bars: history (muted) + actuals
           const bars = el("g", { id: "routes-bars" }, B);
@@ -183,8 +186,9 @@
           }
 
           tl.to("#routes-a", { opacity: 0, duration: 0.5, ease: "power2.in" }, P2);
-          tl.fromTo("#routes-b", { opacity: 0 }, { opacity: 1, duration: 0.01 }, P2 + 0.4);
-          tl.fromTo("#routes-title-b", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, P2 + 0.45);
+          tl.fromTo("#routes-b", { opacity: 0 }, { opacity: 1, duration: 0.01 }, P2 + 0.5); // after phase A has fully faded
+          tl.fromTo("#routes-sub-b", { opacity: 0 }, { opacity: 1, duration: 0.5 }, P2 + 0.7);
+          tl.fromTo("#routes-title-b", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, P2 + 0.55);
           tl.fromTo("#routes-legend-b", { opacity: 0 }, { opacity: 1, duration: 0.5 }, P2 + 0.8);
           tl.fromTo("#routes-frame", { opacity: 0 }, { opacity: 1, duration: 0.5 }, P2 + 0.6);
           tl.fromTo("#routes-wins", { opacity: 0 }, { opacity: 1, duration: 0.5 }, P2 + 0.9);
@@ -199,7 +203,7 @@
           tl.fromTo("#routes-count", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, P2 + 4.9);
           const cObj = { v: 0 }, cEl = document.getElementById("routes-count-v");
           tl.to(cObj, { v: RUN.forecast_rows_total || 0, duration: 1.0, ease: "power2.out", onUpdate: () => { cEl.textContent = fmt(cObj.v); } }, P2 + 5.0);
-          tl.to("#routes-in", { opacity: 0, duration: 0.4, ease: "power2.in" }, D - 0.4);
+          tl.to("#routes-in", { opacity: 0, duration: 0.4, ease: "power2.in" }, D - 0.8); // dip: fully out before the next scene starts
           window.__timelines["routes"] = tl;
         })();
       </script>
