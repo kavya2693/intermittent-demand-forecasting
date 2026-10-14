@@ -1,0 +1,516 @@
+# Audit facts for the intermittent-demand-forecasting demo video.
+# Read by docs/demo/source/tools/build_audit_report.py.
+#
+# Check expressions are Python, evaluated with these helpers (paths relative to the repo root;
+# a "demo:" prefix means relative to the demo project folder):
+#   R(path) -> pandas DataFrame from CSV      J(path) -> parsed JSON
+#   row(path, **eq) -> the single CSV row matching all equalities (a pandas Series)
+#   T(path) -> file text                      grep(path, regex) -> True/False
+# plus the helpers defined at the end of this file (PQ() reads a parquet file the same way).
+# A check passes when fmt.format(value) == expect (or, with fmt "bool", when value is True).
+
+project:
+  name: intermittent-demand-forecasting
+  title: "intermittent-demand-forecasting: demo video audit report"
+  repo_url: https://github.com/kavya2693/intermittent-demand-forecasting
+  repo_dir: ../../../..          # paths are relative to this file
+  demo_dir: ..
+  demo_display: docs/demo/source
+  out_dir: ../..
+  video: docs/demo/demo.mp4
+  video_duration_s: 88.4
+  outputs_dir: outputs
+  venv_python: .venv/bin/python
+  version_packages: [lightgbm, statsforecast, pandas, numpy]
+  regenerate:
+    - "make run                                   # outputs/*.csv, run_report.md, forecasts.parquet (~12 min)"
+    - "PYTHONPATH=src .venv/bin/python docs/demo/source/tools/export_forecast_sheet.py docs/demo/source/assets/forecast_sheet.json"
+    - "python3 docs/demo/source/tools/inject_sheet.py docs/demo/source/assets/forecast_sheet.json docs/demo/source/compositions/value.html --block SHEET --keys origin_week,window_end_week,skus,model,wape_8wk_all,forecast_units_8wk,sold_units_8wk,rows"
+    - "python3 docs/demo/source/tools/inject_sheet.py docs/demo/source/assets/forecast_sheet.json docs/demo/source/compositions/s04-routes.html --block RUN --keys scatter,example,forecast_rows_total,forecast_models"
+    - "python3 docs/demo/source/tools/make_end_scatter.py outputs/sku_segments.csv docs/demo/source/assets/scatter-end.png"
+    - "cd docs/demo/source && npx --yes hyperframes@0.8.156 check && npx --yes hyperframes@0.8.156 render -f 30 -q looks -o renders/intermittent-demand-forecasting-master.mp4 && cd -"
+    - "ffmpeg -y -i docs/demo/source/renders/intermittent-demand-forecasting-master.mp4 -c:v libx264 -preset slow -crf 25 -pix_fmt yuv420p -movflags +faststart -an docs/demo/demo.mp4"
+    - "python3 docs/demo/source/tools/build_audit_report.py docs/demo/source/audit/facts.yaml   # stills, checks, MD/DOCX/PDF"
+  seeds: {data_seed: 7, lightgbm_seed: 7, skus: 1500, weeks: 156, origins: 6, horizon_weeks: 8}
+  run_time: "outputs/run_report.md: statistical models 329 s + LightGBM 256 s + history-only ablation 144 s = 729 s (about 12 min) for make run (--jobs 4) on the author's laptop"
+
+assumptions:
+  - id: A-01
+    statement: "All data is synthetic, produced by a seeded generator sized to the production problem: 1,500 SKUs, 156 weekly periods, 8 categories, B2B and B2C channels, seed 7. The production data it stands in for is proprietary; the patterns are the ones written into the generator."
+    source: "src/demand_segments/data.py:20-29 (CATEGORIES), :37-39 (GeneratorConfig n_skus=1500, n_weeks=156, seed=7); README 'The data'"
+    figures: [F-03, F-04, F-05]
+    all_figures: true
+    edit: ["src/demand_segments/data.py (GeneratorConfig, CATEGORIES, PATTERN_MIX)"]
+    rerun: ["make data", "make run", "export_forecast_sheet.py + inject_sheet.py"]
+  - id: A-02
+    statement: "Segments use the Syntetos-Boylan cut-offs ADI 1.32 and CV² 0.49, computed on the history before the first origin, and stay fixed for all six origins."
+    source: "src/demand_segments/segments.py:14-15; src/demand_segments/backtest.py:51"
+    figures: [F-05, F-06, F-08, F-09, F-18, F-37, F-38, F-62]
+    edit: ["src/demand_segments/segments.py:14-15"]
+    rerun: ["make run", "export_forecast_sheet.py + inject_sheet.py"]
+  - id: A-03
+    statement: "Walk-forward backtest: six origins, eight weeks apart, each forecasting the next eight weeks (48 test weeks), the same windows for every model."
+    source: "src/demand_segments/cli.py:18 (--windows default 6); features.py:21 (HORIZON = 8); backtest.py:29-31 (origins)"
+    figures: [F-07, F-11, F-25, F-36, F-39, F-41, F-56, F-64]
+    edit: ["src/demand_segments/cli.py:18", "src/demand_segments/features.py:21"]
+    rerun: ["make run", "export_forecast_sheet.py + inject_sheet.py"]
+  - id: A-04
+    statement: "Each segment's champion is picked on eight-week WAPE over origins 1-3 and graded on origins 4-6; the zero forecast and the history-only ablation are never eligible."
+    source: "src/demand_segments/report.py:30 (n_select = n_windows // 2); backtest.py:100-130 (champions), :108"
+    figures: [F-10, F-28, F-29, F-35, F-52, F-53, F-54, F-55]
+    edit: ["src/demand_segments/backtest.py:100-130", "src/demand_segments/report.py:30"]
+    rerun: ["make run"]
+  - id: A-05
+    statement: "ETS and ARIMA are fitted without a 52-week season (season_length=1); only seasonal naive and LightGBM carry the yearly pattern, so the statistical side is weaker on seasonal SKUs than a tuned seasonal model would be."
+    source: "src/demand_segments/forecast_stats.py:22-33; README 'Known limitations'"
+    figures: [F-21, F-53, F-55, F-58, F-59, F-60, F-61, F-63, F-64]
+    edit: ["src/demand_segments/forecast_stats.py:22-33"]
+    rerun: ["make run"]
+  - id: A-06
+    statement: "LightGBM settings: Tweedie objective (variance power 1.3), 400 rounds, 63 leaves, seed 7, 4 threads; one global model, direct 1-8 week horizon, target = sales / SKU level."
+    source: "src/demand_segments/forecast_ml.py:11-27"
+    figures: [F-23, F-50, F-52, F-54, F-56, F-57, F-59]
+    edit: ["src/demand_segments/forecast_ml.py:11-27"]
+    rerun: ["make run", "export_forecast_sheet.py + inject_sheet.py"]
+  - id: A-07
+    statement: "LightGBM may read the calendar, the promotion plan and the price list for the target week (11 'known-future' features), because a planner has them in advance. The per-SKU statistical models see sales history only."
+    source: "src/demand_segments/features.py:1-9 (docstring), forecast_ml.py:30-42 (KNOWN_FUTURE)"
+    figures: [F-24, F-61, F-65]
+    edit: ["src/demand_segments/forecast_ml.py:30-42", "src/demand_segments/features.py (TARGET_FEATURES)"]
+    rerun: ["make run"]
+  - id: A-08
+    statement: "Feed-gap weeks are filled with a trailing 8-week mean for the statistical models' inputs only; every score uses the raw actuals, and missing actual weeks are skipped, never scored as zero."
+    source: "src/demand_segments/forecast_stats.py:37-46 (impute); metrics.py:9-14 (_clean)"
+    figures: [F-41, F-45, F-46]
+    edit: ["src/demand_segments/forecast_stats.py:37-46"]
+    rerun: ["make run"]
+  - id: A-09
+    statement: "Run times are wall-clock seconds from one make run on the author's laptop with --jobs 4 (statistical models) and 4 LightGBM threads; they change with the machine and its load."
+    source: "outputs/run_report.md 'Run time (seconds)'; Makefile:8 (--jobs 4); README 'What I got wrong first'"
+    figures: [F-22, F-23, F-24, F-33, F-67]
+    edit: ["Makefile:8"]
+    rerun: ["make run"]
+  - id: A-10
+    statement: "Slide 07 shows the LAST backtest origin (2025-11-03, weeks to 2025-12-22) as if it were the planner's sheet, with what actually sold next to it. Rows are the SKU at the median 8-week absolute % error of each segment (plus the next one in the two slow segments), not the best cases. The stock-room drain is forecast total minus weekly actual sales, an illustration, not an inventory simulation (README: point forecasts only)."
+    source: "docs/demo/source/tools/export_forecast_sheet.py (row selection); README 'Known limitations'"
+    figures: [F-43, F-44, F-45, F-46, F-47]
+    edit: ["tools/export_forecast_sheet.py (pick rules)"]
+    rerun: ["export_forecast_sheet.py + inject_sheet.py", "hyperframes render"]
+  - id: A-11
+    statement: "Video rounding: percentages to 1 decimal, units and counts to whole numbers with thousands separators, 8-week totals under 100 units to 1 decimal; '300k-539k', '≈ 12 min' and 'about 0.4 a week' are rounded labels."
+    source: "this audit (display convention)"
+    figures: [F-20, F-33, F-40, F-45, F-46, F-50, F-51, F-52, F-53, F-54, F-55, F-58, F-59, F-60, F-61, F-63, F-67]
+    edit: ["the composition file named on each slide"]
+    rerun: ["hyperframes render"]
+  - id: A-12
+    statement: "Slide 01 (industries, everyday problems) is general demand-planning knowledge used as context. It is not a result of this repo and carries no numbers."
+    source: "author's framing; README 'The problem' supports problems 1, 2 and 4"
+    figures: [F-01, F-02]
+    edit: ["compositions/s01-context.html"]
+    rerun: ["hyperframes render"]
+
+figures:
+  # ---- slide 01
+  - {id: F-01, slides: ["01"], label: "Industries that relate: wholesale & trade distributors, retail chains, spare-parts & MRO suppliers", shown: "3 industry chips", type: general-knowledge, source: "author's framing", key: "-", formula: "-", manual: "Context statement, not a repo output."}
+  - {id: F-02, slides: ["01"], label: "Four everyday problems (one method for the catalogue; slow movers; rare parts out of stock or overstocked; scorecards that reward zero)", shown: "4 problem cards", type: general-knowledge, source: "README 'The problem'", key: "README lines 14-28", formula: "-",
+     check: {expr: "grep('README.md', r'runs one forecasting method across the whole catalogue') and grep('README.md', r'out of\\s+stock for a trade customer') and grep('README.md', r'the forecast that minimises it is zero')", fmt: bool}}
+  # ---- slide 02
+  - {id: F-03, slides: ["02", "05", "06", "07", "08"], label: "SKUs in the catalogue", shown: "1,500 SKUs", type: direct, source: "outputs/sku_segments.csv", key: "row count", formula: "-",
+     check: {expr: "len(R('outputs/sku_segments.csv'))", fmt: "{:,d}", expect: "1,500"}}
+  - {id: F-04, slides: ["02", "05"], label: "Weeks of sales history", shown: "156 weeks / 1,500 × 156 wk", type: direct, source: "outputs/run_log.txt (printed by cli.py from data/sales.parquet)", key: "'1500 SKUs, 156 weeks'", formula: "-",
+     check: {expr: "grep('outputs/run_log.txt', r'^1500 SKUs, 156 weeks$')", fmt: bool}}
+  - {id: F-05, slides: ["02"], label: "Slow movers: SKUs with ADI > 2", shown: "670 are slow movers", type: derived, source: "outputs/sku_segments.csv", key: "adi", formula: "count(adi > 2) = 670",
+     check: {expr: "int((R('outputs/sku_segments.csv')['adi'] > 2).sum())", fmt: "{:d}", expect: "670"}}
+  - {id: F-06, slides: ["02"], label: "Definition: ADI > 2 means a sale in under half the observed weeks", shown: "slow = sells in < half the weeks", type: direct, source: "src/demand_segments/segments.py:26 (adi = len(h) / len(nz))", key: "ADI = observed weeks / weeks with a sale", formula: "ADI > 2 <=> sale weeks < half of observed weeks",
+     check: {expr: "grep('src/demand_segments/segments.py', r'adi = len\\(h\\) / len\\(nz\\)')", fmt: bool}}
+  - {id: F-07, slides: ["02", "05"], label: "Methods compared on the same windows (6 statistical + LightGBM)", shown: "7 methods, same windows / Seven methods", type: direct, source: "outputs/forecasts.parquet (model column)", key: "models minus ZeroForecast and LightGBM-history-only", formula: "9 - 2 = 7",
+     check: {expr: "len(set(PQ('outputs/forecasts.parquet')['model'].unique()) - {'ZeroForecast', 'LightGBM-history-only'})", fmt: "{:d}", expect: "7"}}
+  - {id: F-08, slides: ["02", "04"], label: "SKUs in the segments where the zero forecast has the best weekly WAPE (intermittent 397 + lumpy 432)", shown: "weekly WAPE crowns zero: 829 SKUs", type: derived, source: "outputs/segment_counts.csv; outputs/scores_by_segment.csv", key: "skus where segment in {intermittent, lumpy}", formula: "397 + 432 = 829",
+     check: {expr: "int(R('outputs/segment_counts.csv').query(\"segment in ['intermittent', 'lumpy']\")['skus'].sum())", fmt: "{:d}", expect: "829"}}
+  - {id: F-09, slides: ["02", "04"], label: "The zero forecast beats every model on weekly WAPE in exactly the intermittent and lumpy segments", shown: "crowns zero / zero beats every model", type: derived, source: "outputs/scores_by_segment.csv", key: "argmin(wape) per segment", formula: "segments whose best weekly WAPE is ZeroForecast = {intermittent, lumpy}",
+     check: {expr: "zero_wins_weekly() == ['intermittent', 'lumpy']", fmt: bool}}
+  # ---- slide 03
+  - {id: F-10, slides: ["03"], label: "Plan badges: a method per segment, 8-week totals, losses shown", shown: "method per type · 8-week totals · losses shown", type: direct, source: "outputs/champions.csv; outputs/scores_by_segment.csv (wape_8wk); outputs/lightgbm_vs_best_statistical.csv", key: "4 champion rows; wape_8wk column; win share < 50% on intermittent", formula: "-",
+     check: {expr: "len(R('outputs/champions.csv')) == 4 and 'wape_8wk' in R('outputs/scores_by_segment.csv').columns and row('outputs/lightgbm_vs_best_statistical.csv', segment='intermittent')['lightgbm_sku_win_share'] < 0.5", fmt: bool}}
+  - {id: F-11, slides: ["03", "05"], label: "Replay the past, step forward, repeat (walk-forward origins)", shown: "REPLAY THE PAST · step forward, repeat · refit ×6", type: direct, source: "src/demand_segments/backtest.py:29-31; forecast_stats.py:49-57", key: "origins(); cross_validation(step_size=HORIZON)", formula: "-",
+     check: {expr: "grep('src/demand_segments/backtest.py', r'def origins') and grep('src/demand_segments/forecast_stats.py', r'step_size=HORIZON')", fmt: bool}}
+  # ---- slide 04
+  - {id: F-12, slides: ["04"], label: "Toy example: 4 units every 4th week; zero wins weekly, steady forecast exact on the 8-week total", shown: "SOLD 0 0 0 4 0 0 0 4 · ZERO · STEADY · winners", type: illustrative, source: "tests/test_metrics.py:70-80 (test_eight_week_wape_stops_rewarding_the_zero_forecast)", key: "y = tile([0,0,0,4], 2)", formula: "weekly WAPE: steady 12/8 = 150% > zero 100%; 8-week WAPE: steady 0%, zero 100%",
+     check: {expr: "grep('tests/test_metrics.py', r'np.tile\\(\\[0.0, 0.0, 0.0, 4.0\\], 2\\)') and grep('tests/test_metrics.py', r'window_wape\\(df, forecast=\"steady\"\\) == 0.0')", fmt: bool}}
+  # ---- slide 05
+  - {id: F-14, slides: ["05"], label: "Every architecture box exists in the code", shown: "sales.parquet, skus.parquet, calendar.py, data.py, segments.py, features.py, forecast_stats.py, forecast_ml.py, backtest.py, metrics.py, champions(), report.py, fold_summary.py, tests/ · make check", type: direct, source: "src/demand_segments/, scripts/, tests/, Makefile", key: "files + defs", formula: "-",
+     check: {expr: "boxes_exist()", fmt: bool}}
+  - {id: F-16, slides: ["05"], label: "Product categories", shown: "8 categories", type: direct, source: "src/demand_segments/data.py:20-29 (CATEGORIES)", key: "dict entries", formula: "-",
+     check: {expr: "len(_re.findall(r'^    \"\\w+\": \\(', T('src/demand_segments/data.py'), _re.M))", fmt: "{:d}", expect: "8"}}
+  - {id: F-17, slides: ["05"], label: "Generator seed", shown: "data.py · seed 7", type: direct, source: "src/demand_segments/data.py:39", key: "seed: int = 7", formula: "-",
+     check: {expr: "grep('src/demand_segments/data.py', r'seed: int = 7')", fmt: bool}}
+  - {id: F-18, slides: ["05", "06"], label: "Segment cut-offs", shown: "ADI 1.32 · CV² 0.49", type: direct, source: "src/demand_segments/segments.py:14-15", key: "ADI_CUT, CV2_CUT", formula: "-",
+     check: {expr: "grep('src/demand_segments/segments.py', r'^ADI_CUT = 1.32') and grep('src/demand_segments/segments.py', r'^CV2_CUT = 0.49')", fmt: bool}}
+  - {id: F-19, slides: ["05"], label: "Feature registry size", shown: "17 origin + 13 target", type: direct, source: "src/demand_segments/features.py (ORIGIN_FEATURES, TARGET_FEATURES) via demo assets/forecast_sheet.json arch", key: "len(ORIGIN_FEATURES), len(TARGET_FEATURES)", formula: "-",
+     check: {expr: "(lambda a: f\"{a['origin_features']} origin + {a['target_features']} target\")(J('demo:assets/forecast_sheet.json')['arch'])", fmt: "{}", expect: "17 origin + 13 target"}}
+  - {id: F-20, slides: ["05"], label: "LightGBM training rows per fit (first and last origin)", shown: "300k–539k rows / fit", type: derived, source: "features.training_frame(panel, origin) via demo assets/forecast_sheet.json arch", key: "train_rows_first_origin = 299,648; train_rows_last_origin = 539,390", formula: "rounded to thousands",
+     check: {expr: "(lambda a: f\"{round(a['train_rows_first_origin'] / 1000)}k–{round(a['train_rows_last_origin'] / 1000)}k\")(J('demo:assets/forecast_sheet.json')['arch'])", fmt: "{}", expect: "300k–539k"}}
+  - {id: F-21, slides: ["05"], label: "The six per-SKU statistical models", shown: "SNaive52 · MA13 · ETS · Croston · TSB · ARIMA", type: direct, source: "src/demand_segments/forecast_stats.py:25-33", key: "models()", formula: "-",
+     check: {expr: "all(grep('src/demand_segments/forecast_stats.py', p) for p in [r'SeasonalNaive\\(season_length=52\\)', r'WindowAverage\\(window_size=13\\)', r'AutoETS\\(', r'CrostonOptimized\\(\\)', r'TSB\\(', r'AutoARIMA\\('])", fmt: bool}}
+  - {id: F-22, slides: ["05"], label: "Statistical models run time and processes", shown: "329 s · 4 procs", type: direct, source: "outputs/run_report.md; Makefile:8", key: "'statistical models: 329'; --jobs 4", formula: "-",
+     check: {expr: "grep('outputs/run_report.md', r'^- statistical models: 329$') and grep('Makefile', r'--jobs 4')", fmt: bool}}
+  - {id: F-23, slides: ["05"], label: "Global LightGBM settings and run time", shown: "Tweedie · 400 rounds · direct, h = 1..8 · 256 s · 4 threads", type: direct, source: "src/demand_segments/forecast_ml.py:14, :25, :27; features.py:21; outputs/run_report.md", key: "objective, num_threads, ROUNDS, HORIZON, 'LightGBM: 256'", formula: "-",
+     check: {expr: "grep('src/demand_segments/forecast_ml.py', r'\"objective\": \"tweedie\"') and grep('src/demand_segments/forecast_ml.py', r'^ROUNDS = 400') and grep('src/demand_segments/forecast_ml.py', r'\"num_threads\": 4') and grep('src/demand_segments/features.py', r'^HORIZON = 8') and grep('outputs/run_report.md', r'^- LightGBM: 256$')", fmt: bool}}
+  - {id: F-24, slides: ["05"], label: "History-only ablation run time", shown: "Ablation · history only · 144 s", type: direct, source: "outputs/run_report.md", key: "'LightGBM-history-only: 144'", formula: "-",
+     check: {expr: "grep('outputs/run_report.md', r'^- LightGBM-history-only: 144$')", fmt: bool}}
+  - {id: F-25, slides: ["05", "06"], label: "Test weeks per SKU and model (6 origins × 8 weeks)", shown: "same 48 weeks for every model · origins, 8 weeks apart · 6 / 6", type: direct, source: "outputs/forecasts.parquet", key: "distinct weeks; 6 folds", formula: "6 × 8 = 48",
+     check: {expr: "(lambda f: f['week'].nunique() == 48 and f['fold'].nunique() == 6 and bool((f.groupby(['model', 'sku_id']).size() == 48).all()))(PQ('outputs/forecasts.parquet'))", fmt: bool}}
+  - {id: F-26, slides: ["05"], label: "Misaligned windows stop the run", shown: "✕ misaligned windows → stop", type: direct, source: "src/demand_segments/backtest.py:56-59", key: "RuntimeError", formula: "-",
+     check: {expr: "grep('src/demand_segments/backtest.py', r'raise RuntimeError\\(\"statsforecast windows do not line up')", fmt: bool}}
+  - {id: F-27, slides: ["05"], label: "Scorecard measures", shown: "WAPE · 8-wk WAPE · bias · MAPE", type: direct, source: "src/demand_segments/metrics.py", key: "wape, window_wape, bias, mape", formula: "-",
+     check: {expr: "all(grep('src/demand_segments/metrics.py', r'^def ' + n + r'\\(') for n in ['wape', 'window_wape', 'bias', 'mape', 'mape_coverage'])", fmt: bool}}
+  - {id: F-28, slides: ["05", "08"], label: "Champion picked on origins 1-3, graded on 4-6", shown: "pick on origins 1–3, grade 4–6", type: direct, source: "src/demand_segments/report.py:30; backtest.py:109", key: "n_select = n_windows // 2 = 3", formula: "-",
+     check: {expr: "grep('src/demand_segments/report.py', r'n_select = n_windows // 2') and grep('src/demand_segments/backtest.py', r'early, late = fc\\[fc\\[\"fold\"\\] < n_select\\]')", fmt: bool}}
+  - {id: F-29, slides: ["05"], label: "Zero forecast and ablation are not eligible as champions", shown: "✕ zero, ablation: not eligible", type: direct, source: "src/demand_segments/backtest.py:108; tests/test_backtest.py:41", key: "isin([ZERO, ML_HISTORY_ONLY])", formula: "-",
+     check: {expr: "grep('src/demand_segments/backtest.py', r'isin\\(\\[ZERO, ML_HISTORY_ONLY\\]\\)') and grep('tests/test_backtest.py', r'def test_champion_is_never_the_zero_reference')", fmt: bool}}
+  - {id: F-30, slides: ["05"], label: "Files written by report.py", shown: "8 CSV + run_report", type: direct, source: "src/demand_segments/report.py:41-48", key: ".to_csv calls", formula: "-",
+     check: {expr: "len(_re.findall(r'\\.to_csv\\(', T('src/demand_segments/report.py')))", fmt: "{:d}", expect: "8"}}
+  - {id: F-31, slides: ["05"], label: "Per-origin view: wins and |bias| > 10%", shown: "wins · |bias| > 10%", type: direct, source: "scripts/fold_summary.py", key: "origins_with_abs_bias_over_10pct", formula: "-",
+     check: {expr: "grep('scripts/fold_summary.py', r'abs\\(\\) > 0.10')", fmt: bool}}
+  - {id: F-32, slides: ["05"], label: "CI guards: leakage test, metric pins, same windows, no zero champion", shown: "CI guards · leakage test · metric pins · same windows · no 0 champion", type: direct, source: "tests/*.py; .github/workflows/ci.yml; Makefile check", key: "test names", formula: "-",
+     check: {expr: "grep('tests/test_features.py', r'def test_features_ignore_everything_sold_on_or_after_the_origin') and grep('tests/test_metrics.py', r'def test_wape_and_bias_on_hand_worked_numbers') and grep('tests/test_backtest.py', r'def test_every_model_forecasts_the_same_sku_weeks') and grep('tests/test_backtest.py', r'def test_champion_is_never_the_zero_reference') and grep('Makefile', r'^check: lint test') and grep('.github/workflows/ci.yml', r'.')", fmt: bool}}
+  - {id: F-33, slides: ["05", "10"], label: "Full run time", shown: "make run ≈ 12 min / ~12 min", type: derived, source: "outputs/run_report.md 'Run time (seconds)'", key: "329 + 256 + 144 = 729 s", formula: "729 / 60 = 12.2 min",
+     check: {expr: "round(sum(int(x) for x in _re.findall(r'^- [^:]+: (\\d+)$', T('outputs/run_report.md'), _re.M)) / 60)", fmt: "~{:d} min", expect: "~12 min"}}
+  - {id: F-34, slides: ["05"], label: "Batch, offline, no API key or model server", shown: "batch, offline · no API key or model server", type: direct, source: "README 'Running it'", key: "'Nothing needs an API key or a model server'", formula: "-",
+     check: {expr: "grep('README.md', r'Nothing needs an API key or\\s+a model server')", fmt: bool}}
+  - {id: F-35, slides: ["05"], label: "Champion in every segment", shown: "champion path: LightGBM won all 4 segments", type: direct, source: "outputs/champions.csv", key: "champion", formula: "count(champion == LightGBM)",
+     check: {expr: "int((R('outputs/champions.csv')['champion'] == 'LightGBM').sum())", fmt: "{:d}", expect: "4"}}
+  - {id: F-36, slides: ["05"], label: "Models are refitted at each of the 6 origins", shown: "refit ×6", type: direct, source: "src/demand_segments/backtest.py:68-71 (fit per origin); forecast_stats.py:49-57 (cross_validation n_windows)", key: "for fold, origin in enumerate(starts)", formula: "-",
+     check: {expr: "grep('src/demand_segments/backtest.py', r'for fold, origin in enumerate\\(starts\\)') and grep('src/demand_segments/cli.py', r'\"--windows\", type=int, default=6')", fmt: bool}}
+  # ---- slide 06
+  - {id: F-37, slides: ["06"], label: "SKUs per segment (smooth / erratic / intermittent / lumpy)", shown: "325 / 346 / 397 / 432", type: direct, source: "outputs/segment_counts.csv", key: "skus", formula: "-",
+     check: {expr: "'/'.join(str(int(row('outputs/segment_counts.csv', segment=s)['skus'])) for s in ['smooth', 'erratic', 'intermittent', 'lumpy'])", fmt: "{}", expect: "325/346/397/432"}}
+  - {id: F-38, slides: ["06"], label: "The scatter plots every SKU's ADI and CV² exactly as in sku_segments.csv", shown: "1,500 dots on the ADI / CV² plane", type: direct, source: "outputs/sku_segments.csv; RUN block in compositions/s04-routes.html", key: "adi, cv2, segment (rounded to 3 decimals)", formula: "-",
+     check: {expr: "scatter_matches()", fmt: bool}}
+  - {id: F-39, slides: ["06"], label: "Example SKU: LightGBM 8-week total vs units sold, origins 1-6", shown: "3.9/3 · 3.7/3 · 3.6/4 · 3.2/1 · 4.0/1 · 2.9/5", type: derived, source: "outputs/forecasts.parquet", key: "sku_id = SKU00191, model = LightGBM, sum(yhat), sum(y) per fold", formula: "sums per fold, forecast rounded to 0.1",
+     check: {expr: "example_totals()", fmt: "{}", expect: "3.9/3 · 3.7/3 · 3.6/4 · 3.2/1 · 4.0/1 · 2.9/5"}}
+  - {id: F-40, slides: ["06"], label: "Example SKU: mean weekly LightGBM forecast", shown: "about 0.4 a week", type: derived, source: "outputs/forecasts.parquet", key: "SKU00191, LightGBM, mean(yhat) over 48 weeks = 0.44", formula: "-",
+     check: {expr: "PQ('outputs/forecasts.parquet').query(\"sku_id == 'SKU00191' and model == 'LightGBM'\")['yhat'].mean()", fmt: "{:.1f}", expect: "0.4"}}
+  - {id: F-41, slides: ["06"], label: "Forecast rows written by the backtest", shown: "9 models × 1,500 SKUs × 48 weeks = 648,000 forecasts", type: direct, source: "outputs/forecasts.parquet", key: "row count", formula: "9 × 1,500 × 48",
+     check: {expr: "len(PQ('outputs/forecasts.parquet'))", fmt: "{:,d}", expect: "648,000"}}
+  - {id: F-42, slides: ["06"], label: "Example SKU is a spare part (intermittent segment)", shown: "One spare part", type: direct, source: "outputs/sku_segments.csv; data/skus.parquet", key: "SKU00191", formula: "-",
+     check: {expr: "row('outputs/sku_segments.csv', sku_id='SKU00191')['segment'] == 'intermittent' and PQ('data/skus.parquet').set_index('sku_id').loc['SKU00191', 'category'] == 'spare_parts'", fmt: bool}}
+  # ---- slide 07
+  - {id: F-43, slides: ["07"], label: "Six sheet rows (SKU, category, segment, weeks sold of last 52, 8-week forecast, 8-week sold, weekly sales driving the bays)", shown: "SKU01050, SKU01018, SKU00191, SKU00029, SKU01486, SKU00330", type: direct, source: "outputs/forecasts.parquet (fold 6, LightGBM); outputs/sku_segments.csv; data/skus.parquet; data/sales.parquet; SHEET block in compositions/value.html", key: "per-SKU sums", formula: "recomputed from the repo files, compared to the injected SHEET",
+     check: {expr: "sheet_rows_match()", fmt: bool}}
+  - {id: F-44, slides: ["07"], label: "SKUs not shown on the sheet", shown: "+ 1,494 more SKUs on this sheet", type: derived, source: "F-03", key: "1,500 - 6 rows", formula: "1,500 - 6 = 1,494",
+     check: {expr: "len(R('outputs/sku_segments.csv')) - 6", fmt: "{:,d}", expect: "1,494"}}
+  - {id: F-45, slides: ["07"], label: "Units forecast vs sold at the last origin, all SKUs", shown: "215,538 forecast vs 222,039 sold", type: derived, source: "outputs/forecasts.parquet", key: "fold 6, LightGBM: sum(yhat), sum(y)", formula: "-",
+     check: {expr: "(lambda w: f\"{w['yhat'].sum():,.0f} forecast vs {w['y'].sum():,.0f} sold\")(last_window())", fmt: "{}", expect: "215,538 forecast vs 222,039 sold"}}
+  - {id: F-46, slides: ["07"], label: "8-week WAPE at the last origin, all SKUs (LightGBM)", shown: "8-week WAPE 20.7%", type: derived, source: "outputs/forecasts.parquet", key: "fold 6, LightGBM", formula: "sum |8-wk forecast - 8-wk sold| / sum 8-wk sold over SKUs (metrics.window_wape)",
+     check: {expr: "(lambda t: 100 * (t['yhat'] - t['y']).abs().sum() / t['y'].sum())(last_window().dropna(subset=['y']).groupby('sku_id')[['y', 'yhat']].sum())", fmt: "{:.1f}%", expect: "20.7%"}}
+  - {id: F-47, slides: ["07"], label: "Sheet origin and model", shown: "FROM 2025-11-03 · LightGBM", type: direct, source: "outputs/forecasts.parquet", key: "first week of fold 6", formula: "-",
+     check: {expr: "str(PQ('outputs/forecasts.parquet').query('fold == 5')['week'].min().date())", fmt: "{}", expect: "2025-11-03"}}
+  # ---- slide 08
+  - {id: F-50, slides: ["08"], label: "8-week WAPE, LightGBM, all SKUs, all origins", shown: "21.9%", type: direct, source: "outputs/scores_by_segment.csv", key: "segment=all, model=LightGBM, wape_8wk", formula: "x 100",
+     check: {expr: "row('outputs/scores_by_segment.csv', segment='all', model='LightGBM')['wape_8wk'] * 100", fmt: "{:.1f}%", expect: "21.9%"}}
+  - {id: F-51, slides: ["08"], label: "8-week WAPE, seasonal naive, all SKUs", shown: "seasonal naive 29.1%", type: direct, source: "outputs/scores_by_segment.csv", key: "segment=all, model=SeasonalNaive, wape_8wk", formula: "x 100",
+     check: {expr: "row('outputs/scores_by_segment.csv', segment='all', model='SeasonalNaive')['wape_8wk'] * 100", fmt: "{:.1f}%", expect: "29.1%"}}
+  - {id: F-52, slides: ["08"], label: "Smooth champion: weekly WAPE change vs seasonal naive, origins 4-6", shown: "-25.8%", type: direct, source: "outputs/champions.csv", key: "segment=smooth, wape_reduction_vs_seasonal_naive", formula: "-(x 100)",
+     check: {expr: "-row('outputs/champions.csv', segment='smooth')['wape_reduction_vs_seasonal_naive'] * 100", fmt: "{:.1f}%", expect: "-25.8%"}}
+  - {id: F-53, slides: ["08"], label: "Smooth: seasonal naive vs champion weekly WAPE, origins 4-6", shown: "37.6% → 27.9%", type: direct, source: "outputs/champions.csv", key: "seasonal_naive_wape, champion_wape", formula: "-",
+     check: {expr: "(lambda r: f\"{100 * r['seasonal_naive_wape']:.1f}% → {100 * r['champion_wape']:.1f}%\")(row('outputs/champions.csv', segment='smooth'))", fmt: "{}", expect: "37.6% → 27.9%"}}
+  - {id: F-54, slides: ["08"], label: "Erratic champion: weekly WAPE change vs seasonal naive, origins 4-6", shown: "-30.7%", type: direct, source: "outputs/champions.csv", key: "segment=erratic, wape_reduction_vs_seasonal_naive", formula: "-(x 100)",
+     check: {expr: "-row('outputs/champions.csv', segment='erratic')['wape_reduction_vs_seasonal_naive'] * 100", fmt: "{:.1f}%", expect: "-30.7%"}}
+  - {id: F-55, slides: ["08"], label: "Erratic: seasonal naive vs champion weekly WAPE, origins 4-6", shown: "74.8% → 51.9%", type: direct, source: "outputs/champions.csv", key: "seasonal_naive_wape, champion_wape", formula: "-",
+     check: {expr: "(lambda r: f\"{100 * r['seasonal_naive_wape']:.1f}% → {100 * r['champion_wape']:.1f}%\")(row('outputs/champions.csv', segment='erratic'))", fmt: "{}", expect: "74.8% → 51.9%"}}
+  - {id: F-56, slides: ["08"], label: "Segment-origins where LightGBM beats every statistical model on 8-week WAPE", shown: "24/24 · 4 segments × 6 origins", type: direct, source: "outputs/fold_summary.csv", key: "sum(origins_won_on_wape_8wk), sum(origins)", formula: "-",
+     check: {expr: "(lambda f: f\"{int(f['origins_won_on_wape_8wk'].sum())}/{int(f['origins'].sum())}\")(R('outputs/fold_summary.csv'))", fmt: "{}", expect: "24/24"}}
+  - {id: F-57, slides: ["08"], label: "LightGBM has the lowest 8-week WAPE of all candidate models in every segment (all origins)", shown: "LightGBM wins all four segments on the 8-week total.", type: derived, source: "outputs/scores_by_segment.csv", key: "argmin(wape_8wk) excluding ZeroForecast and the ablation", formula: "-",
+     check: {expr: "best_8wk_all_lightgbm()", fmt: bool}}
+  # ---- slide 09
+  - {id: F-58, slides: ["09"], label: "Weekly WAPE, intermittent, zero forecast", shown: "100.0%", type: direct, source: "outputs/scores_by_segment.csv", key: "segment=intermittent, model=ZeroForecast, wape", formula: "x 100",
+     check: {expr: "row('outputs/scores_by_segment.csv', segment='intermittent', model='ZeroForecast')['wape'] * 100", fmt: "{:.1f}%", expect: "100.0%"}}
+  - {id: F-59, slides: ["09"], label: "Weekly WAPE, intermittent, LightGBM", shown: "121.1%", type: direct, source: "outputs/scores_by_segment.csv", key: "segment=intermittent, model=LightGBM, wape", formula: "x 100",
+     check: {expr: "row('outputs/scores_by_segment.csv', segment='intermittent', model='LightGBM')['wape'] * 100", fmt: "{:.1f}%", expect: "121.1%"}}
+  - {id: F-60, slides: ["09"], label: "Weekly WAPE, intermittent, ARIMA (best statistical)", shown: "121.9%", type: direct, source: "outputs/scores_by_segment.csv; outputs/lightgbm_vs_best_statistical.csv", key: "segment=intermittent, model=AutoARIMA, wape; best_statistical = AutoARIMA", formula: "x 100",
+     check: {expr: "row('outputs/lightgbm_vs_best_statistical.csv', segment='intermittent')['best_statistical'] == 'AutoARIMA' and f\"{row('outputs/scores_by_segment.csv', segment='intermittent', model='AutoARIMA')['wape'] * 100:.1f}%\" == '121.9%'", fmt: bool}}
+  - {id: F-61, slides: ["09"], label: "Weekly WAPE, intermittent, LightGBM history only", shown: "122.9%", type: direct, source: "outputs/scores_by_segment.csv", key: "segment=intermittent, model=LightGBM-history-only, wape", formula: "x 100",
+     check: {expr: "row('outputs/scores_by_segment.csv', segment='intermittent', model='LightGBM-history-only')['wape'] * 100", fmt: "{:.1f}%", expect: "122.9%"}}
+  - {id: F-62, slides: ["09"], label: "Intermittent SKUs", shown: "397 SKUs", type: direct, source: "outputs/segment_counts.csv", key: "segment=intermittent", formula: "-",
+     check: {expr: "int(row('outputs/segment_counts.csv', segment='intermittent')['skus'])", fmt: "{:d}", expect: "397"}}
+  - {id: F-63, slides: ["09"], label: "Share of intermittent SKUs where LightGBM beats ARIMA (weekly WAPE)", shown: "45.6%", type: direct, source: "outputs/lightgbm_vs_best_statistical.csv", key: "segment=intermittent, lightgbm_sku_win_share", formula: "x 100",
+     check: {expr: "row('outputs/lightgbm_vs_best_statistical.csv', segment='intermittent')['lightgbm_sku_win_share'] * 100", fmt: "{:.1f}%", expect: "45.6%"}}
+  - {id: F-64, slides: ["09"], label: "Origins where LightGBM beats the best statistical model on weekly WAPE, intermittent", shown: "2 of 6 origins", type: direct, source: "outputs/fold_summary.csv", key: "segment=intermittent, origins_won_on_wape / origins", formula: "-",
+     check: {expr: "(lambda r: f\"{int(r['origins_won_on_wape'])} of {int(r['origins'])}\")(row('outputs/fold_summary.csv', segment='intermittent'))", fmt: "{}", expect: "2 of 6"}}
+  - {id: F-65, slides: ["09"], label: "Without the calendar and promo plan, LightGBM loses to ARIMA on intermittent SKUs (weekly WAPE)", shown: "the edge is the calendar and promo plan, not the algorithm", type: derived, source: "outputs/scores_by_segment.csv", key: "intermittent: LightGBM-history-only 122.9% > AutoARIMA 121.9% > LightGBM 121.1%", formula: "-",
+     check: {expr: "(lambda w: bool(w['LightGBM-history-only'] > w['AutoARIMA'] > w['LightGBM']))(R('outputs/scores_by_segment.csv').query(\"segment == 'intermittent'\").set_index('model')['wape'])", fmt: bool}}
+  # ---- slide 10
+  - {id: F-66, slides: ["10"], label: "Licence", shown: "MIT", type: direct, source: "LICENSE line 1", key: "-", formula: "-",
+     check: {expr: "T('LICENSE').startswith('MIT License')", fmt: bool}}
+  - {id: F-67, slides: ["10"], label: "Run command scope", shown: "$ make run   # 1,500 SKUs, 6 origins, ~12 min", type: direct, source: "Makefile:7-9; README 'Running it'", key: "run target", formula: "-",
+     check: {expr: "grep('Makefile', r'^run:') and grep('README.md', r'make run\\s+# 1,500 SKUs, six origins')", fmt: bool}}
+  - {id: F-68, slides: ["10"], label: "Stack chips are real dependencies", shown: "LightGBM · statsforecast · pandas · Python", type: direct, source: "pyproject.toml dependencies", key: "lightgbm, statsforecast, pandas", formula: "-",
+     check: {expr: "all(grep('pyproject.toml', p) for p in [r'\"lightgbm', r'\"statsforecast', r'\"pandas', r'requires-python'])", fmt: bool}}
+
+slides:
+  - id: "01"
+    title: "The industry"
+    image: slides/slide-01.jpg
+    time: "0.0-7.2 s"
+    composition: "compositions/s01-context.html"
+    text:
+      - "01 · THE INDUSTRY"
+      - "Thousands of SKUs, one weekly forecast to order from."
+      - "WHO LIVES WITH THIS · Wholesale & trade distributors · Retail chains · Spare-parts & MRO suppliers"
+      - "01 One forecast method runs the whole catalogue — No time to tune each series"
+      - "02 Slow movers sell nothing most weeks — The method was built for steady sellers"
+      - "03 Rare parts run out, or sit for a year — A trade customer waits, or cash is tied up"
+      - "04 Scorecards that reward forecasting zero — Looks accurate, stocks nothing"
+      - "THIS PROJECT finds the right forecast for each kind of SKU · segment → backtest → pick → report"
+    assumptions: [A-12]
+    illustrative: ["The whole slide is context; no repo figures."]
+    change: "Edit the chips (#ctx-c1..3) and cards (#ctx-k1..4) in compositions/s01-context.html."
+  - id: "02"
+    title: "This project"
+    image: slides/slide-02.jpg
+    time: "6.8-12.0 s"
+    composition: "compositions/s02-hook.html"
+    text:
+      - "02 · THIS PROJECT"
+      - "1,500 SKUs, 156 weeks. 670 are slow movers. Which method fits which?"
+      - "slow = sells in < half the weeks · 7 methods, same windows · weekly WAPE crowns zero: 829 SKUs"
+    assumptions: [A-01, A-02, A-03]
+    illustrative: ["Rings in the background are decoration."]
+    change: "Headline spans #hook-l1..l3 and chips #hook-f1..f3 in compositions/s02-hook.html."
+  - id: "03"
+    title: "How it works (white chapter, slide A)"
+    image: slides/slide-03.jpg
+    time: "11.7-19.7 s"
+    composition: "compositions/explainer.html (CONFIG.blocks, CONFIG.groups, CONFIG.loop)"
+    text:
+      - "03 · HOW IT WORKS"
+      - "From sales to the right forecast"
+      - "SALES weekly units per SKU → SORT steady, spiky or rare? → [REPLAY THE PAST: FORECAST every method competes → FAIR TEST on the same past weeks] → PICK a winner per type → PLAN ✓ method per type ✓ 8-week totals ✓ losses shown"
+      - "step forward, repeat (loop over the fair test)"
+    assumptions: [A-02, A-03, A-04]
+    illustrative: ["Icons and colours are a visual language, not data.", "'Type' is the plain-words name for a demand segment."]
+    change: "Edit CONFIG in compositions/explainer.html; badge truth is F-10."
+  - id: "04"
+    title: "The key idea (white chapter, slide B)"
+    image: slides/slide-04.jpg
+    time: "19.7-26.7 s"
+    composition: "compositions/explainer.html (#ex-b ...)"
+    text:
+      - "04 · THE KEY IDEA"
+      - "Grade the 8-week total"
+      - "A part sells 4 units every 4th week — most weeks show zero sales"
+      - "Scored week by week, \"zero\" wins — it is never far off a zero week"
+      - "Scored on the 8-week total, the steady forecast wins — an order covers weeks, not one week"
+      - "ONE SLOW SKU · 8 WEEKS: SOLD 0 0 0 4 0 0 0 4 (total 8) · ZERO 0 ×8 (0) · STEADY 1 ×8 (8)"
+      - "WEEK BY WEEK winner: zero · an order of nothing | 8-WEEK TOTAL winner: steady · 8 forecast, 8 sold"
+      - "Backtest: week by week, zero beats every model on the intermittent and lumpy segments (829 of 1,500 SKUs)."
+    assumptions: [A-02, A-04]
+    illustrative: ["The SOLD / ZERO / STEADY grid is the hand-worked case pinned in tests/test_metrics.py (F-12), not a real SKU."]
+    change: "Markup under #ex-b and the grid script in compositions/explainer.html; the footnote figures are F-08 and F-09."
+  - id: "05"
+    title: "Architecture"
+    image: slides/slide-05a.jpg
+    image2: slides/slide-05b.jpg
+    time: "26.4-42.4 s"
+    composition: "compositions/s03-architecture.html"
+    text:
+      - "05 · ARCHITECTURE"
+      - "Seven methods, the same weeks, one scorecard per segment."
+      - "1 · DATA: sales.parquet Weekly sales (1,500 × 156 wk) · skus.parquet SKU master (8 categories) · calendar.py Calendar (known in advance) · data.py · seed 7"
+      - "2 · SEGMENTS · FEATURES: segments.py Segmenter (ADI 1.32 · CV² 0.49 → 4 segments) · features.py Feature registry (17 origin + 13 target · history < origin only · 300k–539k rows / fit)"
+      - "3 · MODELS: forecast_stats.py 6 per-SKU models (SNaive52 · MA13 · ETS · Croston · TSB · ARIMA · 329 s · 4 procs) · forecast_ml.py Global LightGBM (Tweedie · 400 rounds · direct, h = 1..8 · 256 s · 4 threads) · Ablation (history only · 144 s)"
+      - "4 · BACKTEST · DECIDE: backtest.py Walk-forward backtest (same 48 weeks for every model · origins, 8 weeks apart 6 / 6 · ✕ misaligned windows → stop) → metrics.py Scorecard (WAPE · 8-wk WAPE · bias · MAPE) → champions() Champion per segment (pick on origins 1–3, grade 4–6 · ✕ zero, ablation: not eligible)"
+      - "5 · REPORT · CI: report.py Report (segment tables · ML vs best statistical) → outputs/ (8 CSV + run_report · forecasts.parquet) → fold_summary.py Per-origin view (wins · |bias| > 10%) · tests/ · make check CI guards (leakage test · metric pins · same windows · no 0 champion)"
+      - "Edge labels: history · units · gap-filled · features · segment · forecasts · refit ×6 · tables · by fold · guards"
+      - "make run ≈ 12 min · batch, offline · no API key or model server · legend: data / control-check"
+      - "champion path: LightGBM won all 4 segments"
+    assumptions: [A-01, A-02, A-03, A-04, A-05, A-06, A-07, A-08, A-09]
+    illustrative: ["Packets moving along the wires show execution order, not data volumes.", "The origin bar fills 1..6 in animation time, not real time.", "The 'champion path' highlight marks the LightGBM route through the pipeline; the other boxes are dimmed, not removed."]
+    change: "Node boxes (#n-*) and the W wires array (points, labels, execution order, crit flag) in compositions/s03-architecture.html."
+  - id: "06"
+    title: "The system running"
+    image: slides/slide-06a.jpg
+    image2: slides/slide-06b.jpg
+    time: "42.0-56.6 s"
+    composition: "compositions/s04-routes.html (RUN block injected by tools/inject_sheet.py)"
+    text:
+      - "06 · THE SYSTEM RUNNING"
+      - "Every SKU, placed by how often and how evenly it sells."
+      - "ADI / CV² scatter with cut lines ADI 1.32, CV² 0.49 · 1,500 SKUs · smooth 325 sells most weeks · erratic 346 most weeks, sizes jump · intermittent 397 rare, steady size · lumpy 432 rare, sizes jump"
+      - "ADI average weeks between sales · CV² variation in sale size · history before the first origin"
+      - "One spare part: about 0.4 a week, judged on each 8-week total."
+      - "units sold · LightGBM · seasonal naive; history + origin 1..6; LightGBM 3.9 / sold 3 · 3.7 / 3 · 3.6 / 4 · 3.2 / 1 · 4.0 / 1 · 2.9 / 5"
+      - "9 models × 1,500 SKUs × 48 weeks = 648,000 forecasts, same windows"
+    assumptions: [A-02, A-03, A-08]
+    illustrative: ["The scatter is redrawn in SVG from outputs/sku_segments.csv (the repo saves no plot); CV² axis runs to 3.4 (max in data 3.20).", "The plain-words segment descriptions are the Syntetos-Boylan quadrant meanings."]
+    change: "Re-run tools/export_forecast_sheet.py + tools/inject_sheet.py --block RUN; layout in compositions/s04-routes.html."
+  - id: "07"
+    title: "End-user value (white)"
+    image: slides/slide-07.jpg
+    time: "56.3-69.3 s"
+    composition: "compositions/value.html (SHEET block injected by tools/inject_sheet.py)"
+    text:
+      - "07 · END-USER VALUE"
+      - "What the planner gets"
+      - "8-WEEK FORECAST SHEET · FROM 2025-11-03 · LightGBM — columns SKU, CATEGORY, SEGMENT, SOLD/52, FORECAST, SOLD, DIFF"
+      - "SKU01050 toys smooth 52 1,266 1,140 +126"
+      - "SKU01018 cleaning erratic 52 344 429 −85.4"
+      - "SKU00191 spare parts intermittent 15 2.9 5 −2.1"
+      - "SKU00029 spare parts intermittent 25 5.7 4 +1.7"
+      - "SKU01486 spare parts lumpy 31 15.8 30 −14.2"
+      - "SKU00330 spare parts lumpy 24 7.8 15 −7.2"
+      - "+ 1,494 more SKUs on this sheet · ✓ 1,500 SKUs · 215,538 forecast vs 222,039 sold · 8-week WAPE 20.7%"
+      - "STOCK ROOM · NEXT 8 WEEKS · stock to the plan, then 8 real weeks of sales · planner · plan 1,266 / 344 / 2.9 / 15.8 · WEEK 8 / 8 · +126 left · −85.4 short · −2.1 short · −14.2 short"
+      - "An 8-week total for every SKU, from the model that won its segment. Slow movers get a number, not zero."
+    assumptions: [A-06, A-10, A-11]
+    illustrative: ["Planner figure, boxes and bays are drawings; bay heights are scaled per bay.", "The bays drain by each week's real units sold; this is forecast minus actual, not a service-level or inventory simulation (A-10).", "'Slow movers get a number, not zero' describes the LightGBM forecasts shown; it is framing, not a measured result."]
+    change: "Re-run tools/export_forecast_sheet.py, then tools/inject_sheet.py --block SHEET; layout and scene in compositions/value.html."
+  - id: "08"
+    title: "Results"
+    image: slides/slide-08.jpg
+    time: "69.0-77.8 s"
+    composition: "compositions/s05-results.html (stats array)"
+    text:
+      - "08 · RESULTS · 1,500 SKUS · 6 ORIGINS"
+      - "LightGBM wins all four segments on the 8-week total."
+      - "LIGHTGBM 21.9% 8-week WAPE, all SKUs · seasonal naive 29.1%"
+      - "CHAMPION · SMOOTH −25.8% weekly WAPE vs seasonal naive · 37.6% → 27.9%"
+      - "CHAMPION · ERRATIC −30.7% weekly WAPE vs seasonal naive · 74.8% → 51.9%"
+      - "BACKTEST 24/24 segment-origins won on 8-week WAPE · 4 segments × 6 origins"
+      - "champions picked on origins 1–3 and graded on 4–6 · cards 2–3 are origins 4–6"
+    assumptions: [A-04, A-05, A-06, A-11]
+    illustrative: ["Mini bars under each number are drawn to the same ratio (after / before; 24/24 = full)."]
+    change: "The stats array and card text in compositions/s05-results.html."
+  - id: "09"
+    title: "What didn't win"
+    image: slides/slide-09.jpg
+    time: "77.4-84.4 s"
+    composition: "compositions/s06-twist.html"
+    text:
+      - "09 · WHAT DIDN'T WIN"
+      - "On intermittent SKUs, LightGBM barely beats ARIMA."
+      - "Weekly WAPE, intermittent segment (397 SKUs), all 6 origins · lower is better"
+      - "Zero forecast (orders nothing) 100.0% · LightGBM (calendar + promo plan) 121.1% · ARIMA (best statistical) 121.9% · LightGBM, history only (no calendar or promo) 122.9%"
+      - "Why: the edge is the calendar and promo plan, not the algorithm. LightGBM beats ARIMA on only 45.6% of these SKUs, and on 2 of 6 origins."
+    assumptions: [A-05, A-07, A-11]
+    illustrative: ["Bar lengths: 1,000 px track = 140% weekly WAPE."]
+    change: "Rows #twist-r1..r4 (bar widths are inline styles) in compositions/s06-twist.html."
+  - id: "10"
+    title: "End card"
+    image: slides/slide-10.jpg
+    time: "84.0-88.4 s"
+    composition: "compositions/s07-end.html"
+    text:
+      - "10 · OPEN SOURCE · MIT · RUNS ON A LAPTOP"
+      - "intermittent-demand-forecasting"
+      - "github.com/kavya2693/intermittent-demand-forecasting"
+      - "LightGBM · statsforecast · pandas · Python"
+      - "$ make run   # 1,500 SKUs, 6 origins, ~12 min"
+    assumptions: [A-09, A-11]
+    illustrative: ["Faded scatter in the background is outputs/sku_segments.csv drawn by tools/make_end_scatter.py."]
+    change: "Text in compositions/s07-end.html."
+
+caveats:
+  - "All results are on generated data (A-01): they show the method behaving as expected on realistic patterns, not a measured business impact (README 'Known limitations')."
+  - "Forecasts are point forecasts only; slide 07's 'left / short' is forecast minus actual over 8 weeks, not a fill-rate or stock simulation (A-10)."
+  - "ETS and ARIMA run without a yearly season (A-05), which makes the statistical side weaker on seasonal SKUs than a tuned seasonal model."
+  - "LightGBM under-forecasts lumpy SKUs (bias -8.9% over all origins, -15.7% at its worst origin); the video does not show this, the README does."
+  - "Weekly WAPE above 100% on the intermittent and lumpy segments is expected: a zero forecast scores exactly 100%, which is why the scorecard uses the 8-week total."
+  - "Slide 07 rows are median-error SKUs per segment chosen by the demo export script, not by the repo."
+  - "Run times (A-09) are one run on the author's laptop."
+  - "Slide 01 statements are general demand-planning knowledge (A-12)."
+
+stills:
+  master: renders/intermittent-demand-forecasting-master.mp4   # relative to demo_dir
+  width: 1600
+  times: {"01": 6.4, "02": 11.5, "03": 19.2, "04": 26.2, "05a": 35.0, "05b": 41.0, "06a": 48.5, "06b": 56.1, "07": 68.7, "08": 77.3, "09": 83.9, "10": 88.3}
+
+# Extra check helpers (Python), available to check expressions.
+helpers: |
+  import re as _re
+  _P = T.__closure__[0].cell_contents   # the path resolver used by R/J/T (repo-relative, or demo: prefix)
+
+  def PQ(p):
+      return pd.read_parquet(_P(p))
+
+  def _block(path, name):
+      html = T(path)
+      m = _re.search(r"const " + name + r" = (\{.*?\}); /\* " + name + r":END", html, _re.S)
+      return json.loads(m.group(1))
+
+  def zero_wins_weekly():
+      s = R('outputs/scores_by_segment.csv')
+      s = s[s['segment'] != 'all']
+      best = s.sort_values('wape').groupby('segment').head(1)
+      return sorted(best.loc[best['model'] == 'ZeroForecast', 'segment'].tolist())
+
+  def best_8wk_all_lightgbm():
+      s = R('outputs/scores_by_segment.csv')
+      s = s[(s['segment'] != 'all') & ~s['model'].isin(['ZeroForecast', 'LightGBM-history-only'])]
+      best = s.sort_values('wape_8wk').groupby('segment').head(1)
+      return bool(len(best) == 4 and (best['model'] == 'LightGBM').all())
+
+  def boxes_exist():
+      checks = [
+          ('src/demand_segments/data.py', r'^def generate'), ('src/demand_segments/data.py', r'sales.parquet'),
+          ('src/demand_segments/data.py', r'skus.parquet'), ('src/demand_segments/calendar.py', r'^def calendar_frame'),
+          ('src/demand_segments/segments.py', r'^def segment_table'), ('src/demand_segments/features.py', r'^ORIGIN_FEATURES'),
+          ('src/demand_segments/features.py', r'^TARGET_FEATURES'), ('src/demand_segments/forecast_stats.py', r'^def backtest'),
+          ('src/demand_segments/forecast_stats.py', r'^def impute'), ('src/demand_segments/forecast_ml.py', r'^def fit'),
+          ('src/demand_segments/backtest.py', r'^def run'), ('src/demand_segments/backtest.py', r'^def champions'),
+          ('src/demand_segments/metrics.py', r'^def score'), ('src/demand_segments/report.py', r'^def write'),
+          ('scripts/fold_summary.py', r'^def main'), ('Makefile', r'^check:'),
+      ]
+      return all(grep(f, p) for f, p in checks)
+
+  def scatter_matches():
+      run = _block('demo:compositions/s04-routes.html', 'RUN')
+      s = R('outputs/sku_segments.csv')
+      if len(run['scatter']) != len(s):
+          return False
+      for (a, c, g), (_, r) in zip(run['scatter'], s.iterrows()):
+          if abs(a - r['adi']) > 0.0006 or abs(c - r['cv2']) > 0.0006 or g != r['segment']:
+              return False
+      return True
+
+  def example_totals():
+      run = _block('demo:compositions/s04-routes.html', 'RUN')
+      sku = run['example']['sku']
+      f = PQ('outputs/forecasts.parquet').query("sku_id == @sku and model == 'LightGBM'")
+      parts = []
+      for k, g in f.groupby('fold'):
+          parts.append(f"{g['yhat'].sum():.1f}/{int(g['y'].sum())}")
+          if [round(float(g['yhat'].sum()), 1), int(g['y'].sum())] != run['example']['totals'][k]:
+              return 'injected totals differ'
+      return ' · '.join(parts) if sku == 'SKU00191' else 'different example SKU'
+
+  def last_window():
+      f = PQ('outputs/forecasts.parquet')
+      return f[(f['fold'] == f['fold'].max()) & (f['model'] == 'LightGBM')]
+
+  def sheet_rows_match():
+      """The SHEET block injected in value.html must equal a fresh recomputation from the repo files."""
+      sheet = _block('demo:compositions/value.html', 'SHEET')
+      w = last_window()
+      seg = R('outputs/sku_segments.csv').set_index('sku_id')
+      skus = PQ('data/skus.parquet').set_index('sku_id')
+      sales = PQ('data/sales.parquet')
+      origin = w['week'].min()
+      hist = sales[(sales['week'] < origin) & (sales['week'] >= origin - pd.Timedelta(weeks=52))]
+      for r in sheet['rows']:
+          g = w[w['sku_id'] == r['sku']].sort_values('week')
+          ok = (
+              round(float(g['yhat'].sum()), 1) == r['forecast_8wk']
+              and int(g['y'].sum()) == r['sold_8wk']
+              and [int(v) for v in g['y']] == r['weekly_sold']
+              and seg.loc[r['sku'], 'segment'] == r['segment']
+              and skus.loc[r['sku'], 'category'] == r['category']
+              and int((hist.loc[hist['sku_id'] == r['sku'], 'units'] > 0).sum()) == r['weeks_sold_52']
+          )
+          if not ok:
+              return False
+      return (
+          [r['sku'] for r in sheet['rows']] == ['SKU01050', 'SKU01018', 'SKU00191', 'SKU00029', 'SKU01486', 'SKU00330']
+          and sheet['origin_week'] == str(origin.date())
+      )

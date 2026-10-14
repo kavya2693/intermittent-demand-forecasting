@@ -1,0 +1,518 @@
+{
+ "generated": "2026-10-14 14:20",
+ "commit": "3616b6c2747b6be20b0c56b6345c4954391b22ac",
+ "checks": [
+  {
+   "id": "F-01",
+   "shown": "3 industry chips",
+   "type": "general-knowledge",
+   "status": "manual",
+   "computed": "-",
+   "reason": "Context statement, not a repo output."
+  },
+  {
+   "id": "F-02",
+   "shown": "4 problem cards",
+   "type": "general-knowledge",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-03",
+   "shown": "1,500 SKUs",
+   "type": "direct",
+   "computed": "1,500",
+   "expect": "1,500",
+   "status": "pass"
+  },
+  {
+   "id": "F-04",
+   "shown": "156 weeks / 1,500 \u00d7 156 wk",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-05",
+   "shown": "670 are slow movers",
+   "type": "derived",
+   "computed": "670",
+   "expect": "670",
+   "status": "pass"
+  },
+  {
+   "id": "F-06",
+   "shown": "slow = sells in < half the weeks",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-07",
+   "shown": "7 methods, same windows / Seven methods",
+   "type": "direct",
+   "computed": "7",
+   "expect": "7",
+   "status": "pass"
+  },
+  {
+   "id": "F-08",
+   "shown": "weekly WAPE crowns zero: 829 SKUs",
+   "type": "derived",
+   "computed": "829",
+   "expect": "829",
+   "status": "pass"
+  },
+  {
+   "id": "F-09",
+   "shown": "crowns zero / zero beats every model",
+   "type": "derived",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-10",
+   "shown": "method per type \u00b7 8-week totals \u00b7 losses shown",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-11",
+   "shown": "REPLAY THE PAST \u00b7 step forward, repeat \u00b7 refit \u00d76",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-12",
+   "shown": "SOLD 0 0 0 4 0 0 0 4 \u00b7 ZERO \u00b7 STEADY \u00b7 winners",
+   "type": "illustrative",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-14",
+   "shown": "sales.parquet, skus.parquet, calendar.py, data.py, segments.py, features.py, forecast_stats.py, forecast_ml.py, backtest.py, metrics.py, champions(), report.py, fold_summary.py, tests/ \u00b7 make check",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-16",
+   "shown": "8 categories",
+   "type": "direct",
+   "computed": "8",
+   "expect": "8",
+   "status": "pass"
+  },
+  {
+   "id": "F-17",
+   "shown": "data.py \u00b7 seed 7",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-18",
+   "shown": "ADI 1.32 \u00b7 CV\u00b2 0.49",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-19",
+   "shown": "17 origin + 13 target",
+   "type": "direct",
+   "computed": "17 origin + 13 target",
+   "expect": "17 origin + 13 target",
+   "status": "pass"
+  },
+  {
+   "id": "F-20",
+   "shown": "300k\u2013539k rows / fit",
+   "type": "derived",
+   "computed": "300k\u2013539k",
+   "expect": "300k\u2013539k",
+   "status": "pass"
+  },
+  {
+   "id": "F-21",
+   "shown": "SNaive52 \u00b7 MA13 \u00b7 ETS \u00b7 Croston \u00b7 TSB \u00b7 ARIMA",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-22",
+   "shown": "329 s \u00b7 4 procs",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-23",
+   "shown": "Tweedie \u00b7 400 rounds \u00b7 direct, h = 1..8 \u00b7 256 s \u00b7 4 threads",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-24",
+   "shown": "Ablation \u00b7 history only \u00b7 144 s",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-25",
+   "shown": "same 48 weeks for every model \u00b7 origins, 8 weeks apart \u00b7 6 / 6",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-26",
+   "shown": "\u2715 misaligned windows \u2192 stop",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-27",
+   "shown": "WAPE \u00b7 8-wk WAPE \u00b7 bias \u00b7 MAPE",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-28",
+   "shown": "pick on origins 1\u20133, grade 4\u20136",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-29",
+   "shown": "\u2715 zero, ablation: not eligible",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-30",
+   "shown": "8 CSV + run_report",
+   "type": "direct",
+   "computed": "8",
+   "expect": "8",
+   "status": "pass"
+  },
+  {
+   "id": "F-31",
+   "shown": "wins \u00b7 |bias| > 10%",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-32",
+   "shown": "CI guards \u00b7 leakage test \u00b7 metric pins \u00b7 same windows \u00b7 no 0 champion",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-33",
+   "shown": "make run \u2248 12 min / ~12 min",
+   "type": "derived",
+   "computed": "~12 min",
+   "expect": "~12 min",
+   "status": "pass"
+  },
+  {
+   "id": "F-34",
+   "shown": "batch, offline \u00b7 no API key or model server",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-35",
+   "shown": "champion path: LightGBM won all 4 segments",
+   "type": "direct",
+   "computed": "4",
+   "expect": "4",
+   "status": "pass"
+  },
+  {
+   "id": "F-36",
+   "shown": "refit \u00d76",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-37",
+   "shown": "325 / 346 / 397 / 432",
+   "type": "direct",
+   "computed": "325/346/397/432",
+   "expect": "325/346/397/432",
+   "status": "pass"
+  },
+  {
+   "id": "F-38",
+   "shown": "1,500 dots on the ADI / CV\u00b2 plane",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-39",
+   "shown": "3.9/3 \u00b7 3.7/3 \u00b7 3.6/4 \u00b7 3.2/1 \u00b7 4.0/1 \u00b7 2.9/5",
+   "type": "derived",
+   "computed": "3.9/3 \u00b7 3.7/3 \u00b7 3.6/4 \u00b7 3.2/1 \u00b7 4.0/1 \u00b7 2.9/5",
+   "expect": "3.9/3 \u00b7 3.7/3 \u00b7 3.6/4 \u00b7 3.2/1 \u00b7 4.0/1 \u00b7 2.9/5",
+   "status": "pass"
+  },
+  {
+   "id": "F-40",
+   "shown": "about 0.4 a week",
+   "type": "derived",
+   "computed": "0.4",
+   "expect": "0.4",
+   "status": "pass"
+  },
+  {
+   "id": "F-41",
+   "shown": "9 models \u00d7 1,500 SKUs \u00d7 48 weeks = 648,000 forecasts",
+   "type": "direct",
+   "computed": "648,000",
+   "expect": "648,000",
+   "status": "pass"
+  },
+  {
+   "id": "F-42",
+   "shown": "One spare part",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-43",
+   "shown": "SKU01050, SKU01018, SKU00191, SKU00029, SKU01486, SKU00330",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-44",
+   "shown": "+ 1,494 more SKUs on this sheet",
+   "type": "derived",
+   "computed": "1,494",
+   "expect": "1,494",
+   "status": "pass"
+  },
+  {
+   "id": "F-45",
+   "shown": "215,538 forecast vs 222,039 sold",
+   "type": "derived",
+   "computed": "215,538 forecast vs 222,039 sold",
+   "expect": "215,538 forecast vs 222,039 sold",
+   "status": "pass"
+  },
+  {
+   "id": "F-46",
+   "shown": "8-week WAPE 20.7%",
+   "type": "derived",
+   "computed": "20.7%",
+   "expect": "20.7%",
+   "status": "pass"
+  },
+  {
+   "id": "F-47",
+   "shown": "FROM 2025-11-03 \u00b7 LightGBM",
+   "type": "direct",
+   "computed": "2025-11-03",
+   "expect": "2025-11-03",
+   "status": "pass"
+  },
+  {
+   "id": "F-50",
+   "shown": "21.9%",
+   "type": "direct",
+   "computed": "21.9%",
+   "expect": "21.9%",
+   "status": "pass"
+  },
+  {
+   "id": "F-51",
+   "shown": "seasonal naive 29.1%",
+   "type": "direct",
+   "computed": "29.1%",
+   "expect": "29.1%",
+   "status": "pass"
+  },
+  {
+   "id": "F-52",
+   "shown": "-25.8%",
+   "type": "direct",
+   "computed": "-25.8%",
+   "expect": "-25.8%",
+   "status": "pass"
+  },
+  {
+   "id": "F-53",
+   "shown": "37.6% \u2192 27.9%",
+   "type": "direct",
+   "computed": "37.6% \u2192 27.9%",
+   "expect": "37.6% \u2192 27.9%",
+   "status": "pass"
+  },
+  {
+   "id": "F-54",
+   "shown": "-30.7%",
+   "type": "direct",
+   "computed": "-30.7%",
+   "expect": "-30.7%",
+   "status": "pass"
+  },
+  {
+   "id": "F-55",
+   "shown": "74.8% \u2192 51.9%",
+   "type": "direct",
+   "computed": "74.8% \u2192 51.9%",
+   "expect": "74.8% \u2192 51.9%",
+   "status": "pass"
+  },
+  {
+   "id": "F-56",
+   "shown": "24/24 \u00b7 4 segments \u00d7 6 origins",
+   "type": "direct",
+   "computed": "24/24",
+   "expect": "24/24",
+   "status": "pass"
+  },
+  {
+   "id": "F-57",
+   "shown": "LightGBM wins all four segments on the 8-week total.",
+   "type": "derived",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-58",
+   "shown": "100.0%",
+   "type": "direct",
+   "computed": "100.0%",
+   "expect": "100.0%",
+   "status": "pass"
+  },
+  {
+   "id": "F-59",
+   "shown": "121.1%",
+   "type": "direct",
+   "computed": "121.1%",
+   "expect": "121.1%",
+   "status": "pass"
+  },
+  {
+   "id": "F-60",
+   "shown": "121.9%",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-61",
+   "shown": "122.9%",
+   "type": "direct",
+   "computed": "122.9%",
+   "expect": "122.9%",
+   "status": "pass"
+  },
+  {
+   "id": "F-62",
+   "shown": "397 SKUs",
+   "type": "direct",
+   "computed": "397",
+   "expect": "397",
+   "status": "pass"
+  },
+  {
+   "id": "F-63",
+   "shown": "45.6%",
+   "type": "direct",
+   "computed": "45.6%",
+   "expect": "45.6%",
+   "status": "pass"
+  },
+  {
+   "id": "F-64",
+   "shown": "2 of 6 origins",
+   "type": "direct",
+   "computed": "2 of 6",
+   "expect": "2 of 6",
+   "status": "pass"
+  },
+  {
+   "id": "F-65",
+   "shown": "the edge is the calendar and promo plan, not the algorithm",
+   "type": "derived",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-66",
+   "shown": "MIT",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-67",
+   "shown": "$ make run   # 1,500 SKUs, 6 origins, ~12 min",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  },
+  {
+   "id": "F-68",
+   "shown": "LightGBM \u00b7 statsforecast \u00b7 pandas \u00b7 Python",
+   "type": "direct",
+   "computed": "true",
+   "expect": "true",
+   "status": "pass"
+  }
+ ]
+}

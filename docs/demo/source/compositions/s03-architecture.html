@@ -1,0 +1,324 @@
+<!doctype html>
+<html>
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        #arch-root { position: absolute; inset: 0; }
+        #arch-root .diagram { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 960px 600px; }
+        #arch-root svg.wires { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+        #arch-root .halo { fill: none; stroke: #0a1119; stroke-linejoin: round; }
+        #arch-root .wire { fill: none; stroke-linejoin: round; }
+        #arch-root .wire.dash { stroke-dasharray: 10 8; }
+        /* layer headers */
+        #arch-root .lh {
+          position: absolute; top: 214px; display: flex; align-items: center; gap: 10px; font-family: var(--mono);
+          font-size: 21px; font-weight: 700; letter-spacing: 0.12em; white-space: nowrap;
+        }
+        #arch-root .lh i { display: block; width: 14px; height: 14px; border-radius: 4px; }
+        #arch-root .lh-rule { position: absolute; top: 248px; height: 2px; opacity: 0.45; transform-origin: left center; }
+        /* nodes */
+        #arch-root .node {
+          position: absolute; display: flex; flex-direction: column; justify-content: center; gap: 5px;
+          padding: 0 18px; border: 2px solid var(--line); border-radius: 12px; background: var(--panel);
+        }
+        #arch-root .node .t { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); white-space: nowrap; }
+        #arch-root .node .s { font-family: var(--mono); font-size: 20px; color: var(--ink-soft); white-space: nowrap; }
+        #arch-root .node .nf { font-family: var(--mono); font-size: 20px; color: var(--c-eval); white-space: nowrap; }
+        #arch-root .node .x { font-family: var(--mono); font-size: 20px; color: var(--c-risk); white-space: nowrap; }
+        #arch-root .node .f {
+          position: absolute; right: 12px; top: -15px; font-family: var(--mono); font-size: 20px; padding: 1px 9px;
+          border-radius: 6px; background: var(--bg); border: 2px solid var(--line); white-space: nowrap;
+        }
+        #arch-root .node.dashed { border-style: dashed; background: rgba(15, 26, 38, 0.6); }
+        /* data stores: cylinders (rounded body + a top rim ellipse) */
+        #arch-root .store { border-radius: 50% / 20px; padding-top: 16px; }
+        #arch-root .store .rim {
+          position: absolute; left: -2px; top: -2px; width: calc(100% + 4px); height: 40px; border-radius: 50%;
+          border: 2px solid rgba(127, 168, 255, 0.6); background: #132131;
+        }
+        #arch-root .L-eval.store .rim { border-color: rgba(242, 196, 109, 0.7); }
+        #arch-root .store .f { z-index: 1; }
+        #arch-root .store .t, #arch-root .store .s { position: relative; }
+        #arch-root .L-data { border-color: rgba(127, 168, 255, 0.6); }
+        #arch-root .L-data .f { color: var(--c-data); }
+        #arch-root .L-model { border-color: rgba(185, 162, 255, 0.65); }
+        #arch-root .L-model .f { color: var(--c-model); }
+        #arch-root .L-opt { border-color: rgba(63, 216, 168, 0.65); }
+        #arch-root .L-opt .f { color: var(--c-opt); }
+        #arch-root .L-eval { border-color: rgba(242, 196, 109, 0.7); }
+        #arch-root .L-eval .f { color: var(--c-eval); }
+        #arch-root .L-risk { border-color: rgba(255, 138, 115, 0.65); }
+        #arch-root .L-risk .f { color: var(--c-risk); }
+        #arch-root .hero { border: 3px solid var(--c-opt); background: #0f2629; box-shadow: 0 0 30px rgba(63, 216, 168, 0.12); padding: 0 22px; }
+        #arch-root .hero .t { font-size: 32px; }
+        #arch-root .hero .f { left: 14px; right: auto; }
+        #arch-root .origins { position: relative; display: flex; gap: 6px; height: 16px; margin-top: 4px; }
+        #arch-root .origins span { position: relative; display: block; flex: 1 1 0; height: 16px; border-radius: 4px; background: rgba(63, 216, 168, 0.14); }
+        #arch-root .origins span b { position: absolute; left: 0; top: 0; display: block; width: 100%; height: 16px; border-radius: 4px; background: var(--c-opt); transform-origin: left center; }
+        #arch-root .orow { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 20px; color: var(--ink-soft); }
+        #arch-root .orow b { color: var(--c-opt); font-weight: 700; }
+        #arch-root .group-label { position: absolute; font-family: var(--mono); font-size: 20px; color: var(--ink-mute); white-space: nowrap; }
+        #arch-root .pill {
+          position: absolute; height: 32px; display: flex; align-items: center; justify-content: center;
+          font-family: var(--mono); font-size: 20px; border-radius: 8px; background: #0a1119; border: 2px solid var(--line); white-space: nowrap;
+        }
+        #arch-root .band { position: absolute; left: 420px; top: 776px; width: 1380px; height: 2px; background: rgba(242, 196, 109, 0.35); transform-origin: left center; }
+        #arch-root .band-label { position: absolute; left: 120px; top: 762px; font-family: var(--mono); font-size: 21px; font-weight: 700; letter-spacing: 0.12em; color: var(--c-eval); white-space: nowrap; }
+        #arch-root .strip { position: absolute; top: 952px; font-family: var(--mono); font-size: 21px; color: var(--ink-soft); white-space: nowrap; display: flex; align-items: center; gap: 22px; }
+        #arch-root .strip b { color: var(--c-eval); font-weight: 700; }
+        #arch-root .strip .k { display: flex; align-items: center; gap: 10px; }
+        #arch-root .crit {
+          position: absolute; right: 120px; top: 944px; padding: 8px 18px; border-radius: 10px; border: 2px solid var(--c-opt);
+          background: rgba(63, 216, 168, 0.1); font-family: var(--mono); font-size: 22px; color: var(--ink); white-space: nowrap;
+        }
+        #arch-root .crit b { color: var(--c-opt); }
+      </style>
+
+      <div id="arch-root" data-composition-id="arch" data-width="1920" data-height="1080">
+        <div class="scene" id="arch-in">
+          <div class="eyebrow" data-layout-allow-overlap id="arch-eyebrow">05 · Architecture</div>
+          <div class="scene-title" data-layout-allow-overlap id="arch-title">Seven methods, the same weeks, one scorecard per segment.</div>
+          <div class="diagram" id="arch-diagram">
+            <svg class="wires" viewBox="0 0 1920 1080" id="arch-svg"></svg>
+
+            <!-- layer headers -->
+            <div class="lh" id="arch-h1" style="left: 120px; color: var(--c-data)"><i style="background: var(--c-data)"></i>1 · DATA</div>
+            <div class="lh" id="arch-h2" style="left: 500px; color: var(--c-data)"><i style="background: var(--c-data)"></i>2 · SEGMENTS · FEATURES</div>
+            <div class="lh" id="arch-h3" style="left: 930px; color: var(--c-model)"><i style="background: var(--c-model)"></i>3 · MODELS</div>
+            <div class="lh" id="arch-h4" style="left: 1360px; color: var(--c-opt)"><i style="background: var(--c-opt)"></i>4 · BACKTEST · DECIDE</div>
+            <div class="lh-rule" id="arch-r1" style="left: 120px; width: 240px; background: var(--c-data)"></div>
+            <div class="lh-rule" id="arch-r2" style="left: 500px; width: 290px; background: var(--c-data)"></div>
+            <div class="lh-rule" id="arch-r3" style="left: 930px; width: 290px; background: var(--c-model)"></div>
+            <div class="lh-rule" id="arch-r4" style="left: 1360px; width: 440px; background: var(--c-opt)"></div>
+
+            <!-- 1 data -->
+            <div class="node L-data store" id="n-a1" style="left: 120px; top: 270px; width: 240px; height: 125px">
+              <div class="rim"></div><div class="f">sales.parquet</div><div class="t">Weekly sales</div><div class="s">1,500 × 156 wk</div></div>
+            <div class="node L-data store" id="n-a2" style="left: 120px; top: 425px; width: 240px; height: 105px">
+              <div class="rim"></div><div class="f">skus.parquet</div><div class="t">SKU master</div><div class="s">8 categories</div></div>
+            <div class="node L-data" id="n-a3" style="left: 120px; top: 560px; width: 240px; height: 95px">
+              <div class="f">calendar.py</div><div class="t">Calendar</div><div class="s">known in advance</div></div>
+            <div class="group-label" id="arch-g1" style="left: 120px; top: 672px">data.py · seed 7</div>
+
+            <!-- 2 segments + features -->
+            <div class="node L-data" id="n-b1" style="left: 500px; top: 270px; width: 290px; height: 125px">
+              <div class="f">segments.py</div><div class="t">Segmenter</div><div class="s">ADI 1.32 · CV² 0.49</div><div class="s">→ 4 segments</div></div>
+            <div class="node L-data" id="n-b2" style="left: 500px; top: 470px; width: 290px; height: 175px">
+              <div class="f">features.py</div><div class="t">Feature registry</div><div class="s">17 origin + 13 target</div>
+              <div class="s">history &lt; origin only</div><div class="nf" id="arch-rows">300k–539k rows / fit</div></div>
+
+            <!-- 3 models -->
+            <div class="node L-model" id="n-c1" style="left: 930px; top: 270px; width: 290px; height: 165px">
+              <div class="f">forecast_stats.py</div><div class="t">6 per-SKU models</div>
+              <div class="s">SNaive52 · MA13 · ETS</div><div class="s">Croston · TSB · ARIMA</div><div class="nf">329 s · 4 procs</div></div>
+            <div class="node L-model" id="n-c2" style="left: 930px; top: 470px; width: 290px; height: 175px">
+              <div class="f">forecast_ml.py</div><div class="t">Global LightGBM</div>
+              <div class="s">Tweedie · 400 rounds</div><div class="s">direct, h = 1..8</div><div class="nf">256 s · 4 threads</div></div>
+            <div class="node L-model dashed" id="n-c3" style="left: 930px; top: 675px; width: 290px; height: 70px">
+              <div class="t" style="font-size: 22px">Ablation</div><div class="s">history only · 144 s</div></div>
+
+            <!-- 4 backtest + decide -->
+            <div class="node L-opt hero" id="n-d1" style="left: 1360px; top: 270px; width: 440px; height: 200px">
+              <div class="f">backtest.py</div>
+              <div class="t">Walk-forward backtest</div>
+              <div class="s">same 48 weeks for every model</div>
+              <div class="origins" id="arch-origins"><span><b></b></span><span><b></b></span><span><b></b></span><span><b></b></span><span><b></b></span><span><b></b></span></div>
+              <div class="orow"><span>origins, 8 weeks apart</span><b id="arch-origin-num">0 / 6</b></div>
+              <div class="x">✕ misaligned windows → stop</div>
+            </div>
+            <div class="node L-eval" id="n-d2" style="left: 1360px; top: 505px; width: 440px; height: 100px">
+              <div class="f">metrics.py</div><div class="t">Scorecard</div><div class="s">WAPE · 8-wk WAPE · bias · MAPE</div></div>
+            <div class="node L-opt" id="n-d3" style="left: 1360px; top: 640px; width: 440px; height: 115px">
+              <div class="f">champions()</div><div class="t">Champion per segment</div>
+              <div class="s">pick on origins 1–3, grade 4–6</div><div class="x">✕ zero, ablation: not eligible</div></div>
+
+            <!-- 5 report + CI -->
+            <div class="band-label" id="arch-h5">5 · REPORT · CI</div>
+            <div class="band" id="arch-band"></div>
+            <div class="node L-risk dashed" id="n-e4" style="left: 120px; top: 805px; width: 400px; height: 120px">
+              <div class="f">tests/ · make check</div><div class="t">CI guards</div>
+              <div class="s">leakage test · metric pins</div><div class="s">same windows · no 0 champion</div></div>
+            <div class="node L-eval" id="n-e3" style="left: 660px; top: 805px; width: 280px; height: 120px">
+              <div class="f">fold_summary.py</div><div class="t">Per-origin view</div><div class="s">wins · |bias| &gt; 10%</div></div>
+            <div class="node L-eval store" id="n-e2" style="left: 1080px; top: 805px; width: 280px; height: 120px">
+              <div class="rim"></div><div class="t" style="position: relative">outputs/</div><div class="s" style="position: relative">8 CSV + run_report</div><div class="s" style="position: relative">forecasts.parquet</div></div>
+            <div class="node L-eval" id="n-e1" style="left: 1500px; top: 805px; width: 300px; height: 120px">
+              <div class="f">report.py</div><div class="t">Report</div><div class="s">segment tables</div><div class="s">ML vs best statistical</div></div>
+
+            <div class="strip" id="arch-strip" style="left: 120px">
+              <span><b>make run ≈ 12 min</b> · batch, offline · no API key or model server</span>
+            </div>
+            <div class="strip" id="arch-legend" style="right: 120px">
+              <span class="k"><svg width="44" height="10"><path d="M2 5h40" stroke="#b2bfcc" stroke-width="3.5"/></svg>data</span>
+              <span class="k"><svg width="44" height="10"><path d="M2 5h40" stroke="#b2bfcc" stroke-width="3.5" stroke-dasharray="9 7"/></svg>control / check</span>
+            </div>
+            <div class="crit" id="arch-crit">champion path: <b>LightGBM won all 4 segments</b></div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        (() => {
+          const tl = gsap.timeline({ paused: true });
+          const D = 16;
+          const NS = "http://www.w3.org/2000/svg";
+          const COL = { data: "#7fa8ff", model: "#b9a2ff", opt: "#3fd8a8", eval: "#f2c46d", risk: "#ff8a73" };
+          const svg = document.getElementById("arch-svg");
+          const diagram = document.getElementById("arch-diagram");
+
+          tl.fromTo("#arch-in", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0);
+          tl.fromTo("#arch-eyebrow", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, 0.1);
+          tl.fromTo("#arch-title", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.2);
+          tl.fromTo("#arch-diagram", { scale: 0.985 }, { scale: 1, duration: D, ease: "sine.out" }, 0);
+
+          // ---- wires: orthogonal point lists matching the node boxes above; c = source layer colour.
+          // seq = execution order for the packets; crit = on the champion (critical) path.
+          const W = [
+            { id: "e1", pts: [[360, 310], [500, 310]], c: "data", at: 1.5, seq: 0, pill: ["history", 430, 310] },
+            { id: "e3", pts: [[360, 385], [420, 385], [420, 540], [500, 540]], c: "data", at: 1.5, seq: 0, crit: true, pill: ["units", 420, 510] },
+            { id: "e3b", pts: [[360, 477], [420, 477]], c: "data", at: 1.6, seq: 0, noArrow: true },
+            { id: "e3c", pts: [[360, 607], [420, 607], [420, 540]], c: "data", at: 1.6, seq: 0, noArrow: true },
+            { id: "e2", pts: [[360, 350], [440, 350], [440, 432], [900, 432], [900, 400], [930, 400]], c: "data", at: 2.6, seq: 0, pill: ["gap-filled", 645, 432] },
+            { id: "e4", pts: [[790, 557], [930, 557]], c: "data", at: 2.7, seq: 1, crit: true, pill: ["features", 860, 557] },
+            { id: "e5", pts: [[790, 620], [880, 620], [880, 710], [930, 710]], c: "data", at: 2.8, seq: 1, dash: true },
+            { id: "e6", pts: [[790, 300], [855, 300], [855, 452], [1290, 452], [1290, 420], [1360, 420]], c: "data", at: 3.6, seq: 1, pill: ["segment", 855, 376] },
+            { id: "e7", pts: [[1220, 335], [1360, 335]], c: "model", at: 3.8, seq: 2, pill: ["forecasts", 1290, 335] },
+            { id: "e8", pts: [[1220, 540], [1310, 540], [1310, 443], [1360, 443]], c: "model", at: 3.8, seq: 2, crit: true },
+            { id: "e9", pts: [[1220, 710], [1334, 710], [1334, 462], [1360, 462]], c: "model", at: 3.9, seq: 2, dash: true },
+            { id: "loop", pts: [[1360, 290], [1220, 290]], c: "opt", at: 4.6, seq: 3, dash: true, pill: ["refit ×6", 1290, 290] },
+            { id: "e10", pts: [[1580, 470], [1580, 505]], c: "opt", at: 4.5, seq: 4, crit: true },
+            { id: "e11", pts: [[1580, 605], [1580, 640]], c: "eval", at: 4.8, seq: 5, crit: true },
+            { id: "e12", pts: [[1650, 755], [1650, 805]], c: "opt", at: 5.6, seq: 6, crit: true },
+            { id: "e13", pts: [[1500, 865], [1360, 865]], c: "eval", at: 5.9, seq: 7, crit: true, pill: ["tables", 1430, 865] },
+            { id: "e14", pts: [[1080, 865], [940, 865]], c: "eval", at: 6.2, seq: 8, pill: ["by fold", 1010, 865] },
+            { id: "e15", pts: [[460, 805], [460, 620], [500, 620]], c: "risk", at: 6.4, seq: 1, dash: true, pill: ["guards", 460, 735] },
+          ];
+          const pathD = (pts) => "M" + pts.map((q) => q.join(" ")).join(" L");
+          const lenOf = (pts) => pts.slice(1).reduce((s, p, i) => s + Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]), 0);
+          const mk = (tag, attrs, parent) => {
+            const n = document.createElementNS(NS, tag);
+            Object.entries(attrs).forEach(([k, v]) => n.setAttribute(k, v));
+            (parent || svg).appendChild(n);
+            return n;
+          };
+          // arrowheads, one per layer colour
+          const defs = mk("defs", {});
+          Object.entries(COL).forEach(([k, c]) => {
+            const m = mk("marker", { id: "arch-ah-" + k, viewBox: "0 0 10 10", refX: "8", refY: "5", markerWidth: "15", markerHeight: "15", markerUnits: "userSpaceOnUse", orient: "auto" }, defs);
+            mk("path", { d: "M0 0L10 5L0 10z", fill: c }, m);
+          });
+          W.forEach((w) => {
+            const L = lenOf(w.pts);
+            w.len = L;
+            const d = pathD(w.pts);
+            // a dark halo under every wire turns crossings into clean bridges
+            const halo = mk("path", { d, class: "halo", "stroke-width": 12, opacity: 0, id: "arch-h-" + w.id });
+            const attrs = { d, class: "wire" + (w.dash ? " dash" : ""), stroke: COL[w.c], "stroke-width": 3.5, opacity: w.dash ? 0 : 0.85, id: "arch-w-" + w.id };
+            if (!w.noArrow) attrs["marker-end"] = "url(#arch-ah-" + w.c + ")";
+            const p = mk("path", attrs);
+            tl.fromTo(halo, { attr: { opacity: 0 } }, { attr: { opacity: 1 }, duration: 0.2 }, w.at);
+            if (w.dash) {
+              tl.fromTo(p, { attr: { opacity: 0 } }, { attr: { opacity: 0.85 }, duration: 0.5 }, w.at);
+            } else {
+              p.setAttribute("stroke-dasharray", L + " " + L);
+              p.setAttribute("stroke-dashoffset", String(L));
+              tl.fromTo(p, { attr: { "stroke-dashoffset": L, opacity: 0.85 } }, { attr: { "stroke-dashoffset": 0, opacity: 0.85 }, duration: Math.max(0.35, L / 900), ease: "power2.inOut" }, w.at);
+            }
+            w.el = p;
+          });
+          // label pills sit on top of the wires
+          W.filter((w) => w.pill).forEach((w) => {
+            const [txt, cx, cy] = w.pill;
+            const width = txt.length * 12 + 22;
+            const el = document.createElement("div");
+            el.className = "pill";
+            el.id = "arch-p-" + w.id;
+            el.textContent = txt;
+            el.style.color = COL[w.c];
+            el.style.borderColor = COL[w.c] + "66";
+            el.style.left = cx - width / 2 + "px";
+            el.style.top = cy - 16 + "px";
+            el.style.width = width + "px";
+            diagram.appendChild(el);
+            tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.35 }, w.at + 0.3);
+          });
+
+          // ---- nodes, layer by layer (left to right, then the report band)
+          const pop = (sel, at, from) =>
+            tl.fromTo(sel, Object.assign({ opacity: 0, x: 0, y: 0 }, from), { opacity: 1, x: 0, y: 0, duration: 0.5, ease: "power3.out" }, at);
+          [1, 2, 3, 4].forEach((k, i) => {
+            tl.fromTo("#arch-h" + k, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 0.6 + i * 1.05);
+            tl.fromTo("#arch-r" + k, { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power3.out" }, 0.7 + i * 1.05);
+          });
+          pop("#n-a1", 0.8, { x: -24 });
+          pop("#n-a2", 0.95, { x: -24 });
+          pop("#n-a3", 1.1, { x: -24 });
+          tl.fromTo("#arch-g1", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 1.2);
+          pop("#n-b1", 1.8, { y: 18 });
+          pop("#n-b2", 2.0, { y: 18 });
+          pop("#n-c1", 2.9, { y: 18 });
+          pop("#n-c2", 3.05, { y: 18 });
+          pop("#n-c3", 3.2, { y: 18 });
+          tl.fromTo("#n-d1", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.7, ease: "power3.out" }, 4.0);
+          pop("#n-d2", 4.6, { y: 14 });
+          pop("#n-d3", 4.9, { y: 14 });
+          tl.fromTo("#arch-h5", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 5.4);
+          tl.fromTo("#arch-band", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: "power3.out" }, 5.4);
+          pop("#n-e1", 5.6, { y: 16 });
+          pop("#n-e2", 5.9, { y: 16 });
+          pop("#n-e3", 6.2, { y: 16 });
+          pop("#n-e4", 6.3, { y: 16 });
+          tl.fromTo(["#arch-strip", "#arch-legend"], { opacity: 0 }, { opacity: 1, duration: 0.5 }, 6.6);
+
+          // ---- walk-forward origins tick 1..6 (the refit loop)
+          const onum = document.getElementById("arch-origin-num");
+          const ob = document.querySelectorAll("#arch-origins b");
+          const oc = { v: 0 };
+          ob.forEach((b, i) => tl.fromTo(b, { scaleX: 0 }, { scaleX: 1, duration: 0.45, ease: "none" }, 4.7 + i * 0.5));
+          tl.to(oc, { v: 6, duration: 3.0, ease: "none", onUpdate: () => { onum.textContent = Math.min(6, Math.floor(oc.v + 0.0001)) + " / 6"; } }, 4.7);
+          tl.to("#n-d1", { boxShadow: "0 0 60px rgba(63,216,168,0.32)", duration: 0.75, ease: "sine.inOut", yoyo: true, repeat: 3 }, 4.7);
+
+          // ---- data packets, in execution order (deterministic, finite: two waves)
+          const FLOW = 7.3, STEP = 0.5, SPEED = 560;
+          W.forEach((w) => {
+            const pts = w.pts;
+            const travel = Math.max(0.45, w.len / SPEED);
+            const kf = [];
+            for (let i = 1; i < pts.length; i++) {
+              const seg = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+              kf.push({ attr: { cx: pts[i][0], cy: pts[i][1] }, duration: (travel * seg) / w.len, ease: "none" });
+            }
+            const start = FLOW + w.seq * STEP;
+            for (let k = 0; k < 2; k++) {
+              const c = mk("circle", { r: 7, cx: pts[0][0], cy: pts[0][1], fill: COL[w.c], opacity: 0 });
+              const t0 = start + k * 2.2;
+              tl.fromTo(c, { attr: { opacity: 0, cx: pts[0][0], cy: pts[0][1] } }, { attr: { opacity: 1 }, duration: 0.1, immediateRender: k === 0 }, t0);
+              tl.to(c, { keyframes: kf }, t0);
+              tl.to(c, { attr: { opacity: 0 }, duration: 0.15 }, t0 + travel);
+            }
+          });
+
+          // ---- critical (champion) path: dim the rest, thicken the path
+          const CRIT = 12.0;
+          const critNodes = ["#n-a1", "#n-b2", "#n-c2", "#n-d1", "#n-d2", "#n-d3", "#n-e1", "#n-e2"];
+          const allNodes = Array.from(document.querySelectorAll("#arch-root .node")).map((n) => "#" + n.id);
+          const others = allNodes.filter((n) => !critNodes.includes(n));
+          tl.to(others, { opacity: 0.22, duration: 0.6, ease: "power2.inOut" }, CRIT);
+          tl.to(W.filter((w) => !w.crit && w.id !== "e3b" && w.id !== "e3c").map((w) => w.el), { attr: { opacity: 0.15 }, duration: 0.6 }, CRIT);
+          tl.to(W.filter((w) => w.pill && !w.crit).map((w) => "#arch-p-" + w.id), { opacity: 0.2, duration: 0.6 }, CRIT);
+          tl.to(["#arch-g1", "#arch-strip"], { opacity: 0.35, duration: 0.6 }, CRIT);
+          W.filter((w) => w.crit).forEach((w, i) => {
+            tl.to(w.el, { attr: { "stroke-width": 7, opacity: 1 }, duration: 0.35, ease: "power2.out" }, CRIT + 0.2 + i * 0.12);
+          });
+          tl.to(critNodes, { boxShadow: "0 0 34px rgba(63,216,168,0.28)", duration: 0.6 }, CRIT + 0.3);
+          tl.to("#arch-legend", { opacity: 0, duration: 0.3 }, CRIT);
+          tl.fromTo("#arch-crit", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, CRIT + 0.5);
+
+          tl.to("#arch-in", { opacity: 0, duration: 0.4, ease: "power2.in" }, D - 0.4);
+          window.__timelines["arch"] = tl;
+        })();
+      </script>
+    </template>
+  </body>
+</html>
